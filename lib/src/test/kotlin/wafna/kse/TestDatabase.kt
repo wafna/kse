@@ -47,7 +47,8 @@ class TestDatabase {
                         users.any { it.id == id && it.name == name }
                     }
                 }
-                update("UPDATE users SET name = ? WHERE id = ?", "Uno".paramString(), users[0].id.paramInt())
+                val newName = "Carol"
+                update("UPDATE users SET name = ? WHERE id = ?", newName.paramString(), users[0].id.paramInt())
                     .requireUpdates(1)
                 select("SELECT id, name FROM users") {
                     readRecords {
@@ -57,7 +58,7 @@ class TestDatabase {
                     }
                 }.also {
                     assertEquals(users.size, it.size)
-                    assertTrue(it.any { it.first == users[0].id && it.second == "Uno" })
+                    assertTrue(it.any { it.first == users[0].id && it.second == newName })
                     assertTrue(it.any { it.first == users[1].id && it.second == users[1].name })
                 }
             }

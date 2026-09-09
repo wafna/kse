@@ -62,3 +62,34 @@ For numerical results, i.e. inserts and updates, methods are provided to assert 
 ## Entities
 
 Entities provide a mapping between fields in a single table and a data class.
+By providing a projection and methods for reading and writing a data class, entities simplify the call sites
+where these records are read and written.
+
+```kotlin
+val userEntity  = object: Entity<User>(
+    table = Table("USERS"),
+    fields = listOf("ID".field, "NAME".field)
+) {
+    override fun read(resultSet: ResultIterator): User =
+        User(resultSet.getInt()!!, resultSet.getString()!!)
+
+    context(cx: Connection)
+    override fun write(record: User): List<Param> =
+        listOf(record.id.paramInt(), record.name.paramString())
+}
+```
+
+In the above example, the User object is mapped to two fields in the USERS table. 
+The *read* method is used to map the result set to the User object, 
+and the *write* method is used to map the User object to the parameters for insert and update statements.
+
+```kotlin
+val users = listOf(User(1, "Alice"), User(2, "Bob"))
+
+userEntity.insert(users).requireInserts(2)
+
+val selectedUsers = userEntity.select("U", "WHERE U.ID = ?", 1.paramInt())
+```
+
+The example, above, demonstrates the convenience of using an Entity.
+Note that the select function requires an alias for the table and an optional tail for the generated SQL.
