@@ -20,7 +20,7 @@ val userEntity  = object: Entity<User>(
 
 class TestEntity {
     @Test
-    fun foo() {
+    fun testEntity() {
         runTestDB { db ->
             db.withTransaction {
                 update("CREATE TABLE IF NOT EXISTS test_entity (id INT PRIMARY KEY, name VARCHAR(255))")
