@@ -58,11 +58,29 @@ class TestJDBCTypes {
                         c_bigdecimal, c_bytes, c_date, c_time, c_timestamp, c_ascii, c_char,
                         c_binary, c_object, c_array, c_localdate
                     ) VALUES (
-                        1, 'sample_string', TRUE, 12, 1234, 123456, 1234567890123, 3.14, 2.718281828,
-                        123.45, X'0102030405', '2026-09-09', '14:30:00', '2026-09-09 14:30:00.123',
-                        'ascii_text', 'char_text', X'0102030405', 'custom_object', ARRAY[10, 20, 30], '2026-09-09'
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                     )
-                    """.trimIndent()
+                    """.trimIndent(),
+                    1.setInt(),
+                    "sample_string".setString(),
+                    true.setBoolean(),
+                    12.toByte().setByte(),
+                    1234.toShort().setShort(),
+                    123456.setInt(),
+                    1234567890123L.setLong(),
+                    3.14f.setFloat(),
+                    2.718281828.setDouble(),
+                    expectedBigDecimal.setBigDecimal(),
+                    expectedBytes.setBytes(),
+                    expectedDate.setDate(),
+                    expectedTime.setTime(),
+                    expectedTimestamp.setTimestamp(),
+                    "ascii_text".byteInputStream().setAsciiStream(),
+                    "char_text".reader().setCharacterStream(),
+                    expectedBytes.inputStream().setBinaryStream(),
+                    "custom_object".setObject(),
+                    expectedArray.setArray("INTEGER"),
+                    expectedLocalDate.setLocalDate()
                 ).requireUpdates(1)
 
                 select("SELECT c_string, c_boolean, c_byte, c_short, c_int, c_long, c_float, c_double, c_bigdecimal, c_bytes, c_date, c_time, c_timestamp, c_ascii, c_char, c_binary, c_object, c_array, c_localdate FROM test_getters_all WHERE id = 1") {
