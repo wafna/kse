@@ -1,0 +1,112 @@
+package wafna.kse
+
+import javax.sql.DataSource
+import java.sql.Connection
+import java.sql.PreparedStatement
+import java.sql.ResultSet
+
+class DBException(msg: String, cause: Throwable) : RuntimeException(msg, cause)
+
+/**
+ * Execute the given block within a transaction. The transaction is committed if the block completes
+ * normally and rolled back if it throws an exception.
+ */
+suspend fun <T> DataSource.withTransaction(borrow: suspend context(Connection) () -> T): T =
+    connection.use { connection ->
+        connection.autoCommit = false
+        connection.beginRequest()
+        var success = false
+        try {
+            context(connection) { borrow() }.also {
+                connection.commit()
+                success = true
+            }
+        } catch (e: Throwable) {
+            try {
+                connection.rollback()
+            } catch (e: Throwable) {
+                // We don't want to mask the original exception.
+                e.printStackTrace()
+            }
+            throw e
+        } finally {
+            try {
+                connection.endRequest()
+            } catch (e: Throwable) {
+                if (success) {
+                    throw e
+                }
+                // We don't want to mask the original exception.
+                e.printStackTrace()
+            }
+        }
+    }
+
+/**
+ * Interpolates the params into the prepared statement in order.
+ */
+private fun PreparedStatement.setParams(params: Iterable<Param>) =
+    params.forEachIndexed { index, param -> param(this, 1 + index) }
+
+/**
+ * Interpolates the params into the prepared statement in order.
+ */
+private fun PreparedStatement.setParams(params: Array<out Param>) =
+    params.forEachIndexed { index, param -> param(this, 1 + index) }
+
+context(cx: Connection)
+private suspend inline fun <T> withStatement(
+    sql: String,
+    borrow: suspend PreparedStatement.() -> T,
+): T {
+//    log.debug { "Executing SQL\n```sql\n$sql\n```" }
+    return runCatching { cx.prepareStatement(sql).use { it.borrow() } }
+        .getOrElse {
+            throw DBException("Error while executing SQL\n$sql", it)
+        }
+}
+
+context(_: Connection)
+suspend fun <T> select(
+    sql: String,
+    vararg params: Param,
+    reader: ResultSet.() -> T,
+): T = withStatement(sql) {
+    setParams(params)
+    executeQuery().use { it.reader() }
+}
+
+/**
+ * <code>executeBatch()</code>
+ * To simplify usage and reduce memory footprint, the records are presented as an Iterator.
+ * Callers should produce the param lists for each record on demand.
+ */
+context(_: Connection)
+suspend fun insert(
+    sql: String,
+    records: Iterator<List<Param>>,
+): IntArray = withStatement(sql) {
+    records.forEach { record ->
+        setParams(record)
+        addBatch()
+    }
+    executeBatch()
+}
+
+context(cx: Connection)
+suspend fun update(
+    sql: String,
+    vararg params: Param,
+): Int = withStatement(sql) {
+    setParams(params)
+    executeUpdate()
+}
+
+context(cx: Connection)
+suspend fun update(
+    sql: String,
+    params: Iterable<Param>,
+): Int = withStatement(sql) {
+    setParams(params)
+    executeUpdate()
+}
