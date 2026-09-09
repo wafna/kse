@@ -2,59 +2,63 @@ package wafna.kse
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import javax.sql.DataSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 
+fun runTestDB(f: suspend (DataSource) -> Unit) {
+    val db = HikariDataSource(HikariConfig().also {
+        it.jdbcUrl = "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1"
+        it.username = "sa"
+        it.password = ""
+        it.maximumPoolSize = 1
+    })
+
+    runBlocking { f(db) }
+}
+
 class TestDatabase {
     @Test
     fun test() {
-        val db = HikariDataSource(HikariConfig().also {
-            it.jdbcUrl = "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1"
-            it.username = "sa"
-            it.password = ""
-            it.maximumPoolSize = 1
-        })
-
-        runBlocking {
+        runTestDB { db ->
             db.withTransaction {
-                update("CREATE TABLE IF NOT EXISTS test (id INT PRIMARY KEY, name VARCHAR(255))")
-                val items = listOf(
-                    1 to "one",
-                    2 to "two"
-                )
+                update("CREATE TABLE IF NOT EXISTS users (id INT PRIMARY KEY, name VARCHAR(255))")
+                val alice = User(1, "Alice")
+                val bob = User(2, "Bob")
+                val users = listOf(alice, bob)
                 insert(
-                    "INSERT INTO test (id, name) VALUES (?, ?)",
+                    "INSERT INTO users (id, name) VALUES (?, ?)",
                     // List and parameterize.
-                    items.map {
-                        listOf(it.first.paramInt(), it.second.paramString())
+                    users.map {
+                        listOf(it.id.paramInt(), it.name.paramString())
                     }.iterator()
-                ).requireInserts(items.size)
-                select("SELECT id, name FROM test") {
+                ).requireInserts(users.size)
+                select("SELECT id, name FROM users") {
                     readRecords {
                         val id = getInt()
                         val name = getString()
                         id to name
                     }
                 }.also {
-                    assertEquals(items.size, it.size)
+                    assertEquals(users.size, it.size)
                     it.forEach { (id, name) ->
-                        items.any { it.first == id && it.second == name }
+                        users.any { it.id == id && it.name == name }
                     }
                 }
-                update("UPDATE test SET name = ? WHERE id = ?", "Uno".paramString(), items[0].first.paramInt())
+                update("UPDATE users SET name = ? WHERE id = ?", "Uno".paramString(), users[0].id.paramInt())
                     .requireUpdates(1)
-                select("SELECT id, name FROM test") {
+                select("SELECT id, name FROM users") {
                     readRecords {
                         val id = getInt()
                         val name = getString()
                         id to name
                     }
                 }.also {
-                    assertEquals(items.size, it.size)
-                    assertTrue(it.any { it.first == items[0].first && it.second == "Uno" })
-                    assertTrue(it.any { it.first == items[1].first && it.second == items[1].second })
+                    assertEquals(users.size, it.size)
+                    assertTrue(it.any { it.first == users[0].id && it.second == "Uno" })
+                    assertTrue(it.any { it.first == users[1].id && it.second == users[1].name })
                 }
             }
         }
