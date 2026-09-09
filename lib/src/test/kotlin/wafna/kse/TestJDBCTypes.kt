@@ -1,0 +1,187 @@
+package wafna.kse
+
+import java.math.BigDecimal
+import java.sql.Date
+import java.sql.Time
+import java.sql.Timestamp
+import kotlin.test.Test
+import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.Month
+
+class TestJDBCTypes {
+    @Test
+    fun testAllNonNull() {
+        runTestDB { db ->
+            db.withTransaction {
+                update(
+                    """
+                    CREATE TABLE IF NOT EXISTS test_getters_all (
+                        id INT PRIMARY KEY,
+                        c_string VARCHAR(255),
+                        c_boolean BOOLEAN,
+                        c_byte TINYINT,
+                        c_short SMALLINT,
+                        c_int INT,
+                        c_long BIGINT,
+                        c_float REAL,
+                        c_double DOUBLE PRECISION,
+                        c_bigdecimal DECIMAL(10, 2),
+                        c_bytes VARBINARY(255),
+                        c_date DATE,
+                        c_time TIME,
+                        c_timestamp TIMESTAMP,
+                        c_ascii CLOB,
+                        c_char CLOB,
+                        c_binary BLOB,
+                        c_object VARCHAR(255),
+                        c_array INT ARRAY,
+                        c_localdate DATE
+                    )
+                    """.trimIndent()
+                )
+
+                val expectedDate = Date.valueOf("2026-09-09")
+                val expectedTime = Time.valueOf("14:30:00")
+                val expectedTimestamp = Timestamp.valueOf("2026-09-09 14:30:00.123")
+                val expectedBytes = byteArrayOf(1, 2, 3, 4, 5)
+                val expectedBigDecimal = BigDecimal("123.45")
+                val expectedLocalDate = LocalDate(2026, Month.SEPTEMBER, 9)
+                val expectedArray = listOf(10, 20, 30)
+
+                update(
+                    """
+                    INSERT INTO test_getters_all (
+                        id, c_string, c_boolean, c_byte, c_short, c_int, c_long, c_float, c_double,
+                        c_bigdecimal, c_bytes, c_date, c_time, c_timestamp, c_ascii, c_char,
+                        c_binary, c_object, c_array, c_localdate
+                    ) VALUES (
+                        1, 'sample_string', TRUE, 12, 1234, 123456, 1234567890123, 3.14, 2.718281828,
+                        123.45, X'0102030405', '2026-09-09', '14:30:00', '2026-09-09 14:30:00.123',
+                        'ascii_text', 'char_text', X'0102030405', 'custom_object', ARRAY[10, 20, 30], '2026-09-09'
+                    )
+                    """.trimIndent()
+                ).requireUpdates(1)
+
+                select("SELECT c_string, c_boolean, c_byte, c_short, c_int, c_long, c_float, c_double, c_bigdecimal, c_bytes, c_date, c_time, c_timestamp, c_ascii, c_char, c_binary, c_object, c_array, c_localdate FROM test_getters_all WHERE id = 1") {
+                    readRecords {
+                        assertEquals("sample_string", getString())
+                        assertEquals(true, getBoolean())
+                        assertEquals(12.toByte(), getByte())
+                        assertEquals(1234.toShort(), getShort())
+                        assertEquals(123456, getInt())
+                        assertEquals(1234567890123L, getLong())
+                        assertEquals(3.14f, getFloat())
+                        assertEquals(2.718281828, getDouble())
+                        assertEquals(expectedBigDecimal, getBigDecimal())
+                        assertContentEquals(expectedBytes, getBytes())
+                        assertEquals(expectedDate, getDate())
+                        assertEquals(expectedTime, getTime())
+                        assertEquals(expectedTimestamp, getTimestamp())
+                        assertEquals("ascii_text", getAsciiStream()?.bufferedReader()?.readText())
+                        assertEquals("char_text", getCharacterStream()?.readText())
+                        assertContentEquals(expectedBytes, getBinaryStream()?.readAllBytes())
+                        assertEquals("custom_object", getObject())
+                        val arrayResult = (getArray()?.array as? kotlin.Array<*>)?.toList()
+                        assertEquals(expectedArray, arrayResult)
+                        assertEquals(expectedLocalDate, getLocalDate())
+                    }
+                }.also {
+                    assertEquals(1, it.size)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun testAllNull() {
+        runTestDB { db ->
+            db.withTransaction {
+                update(
+                    """
+                    CREATE TABLE IF NOT EXISTS test_getters_null (
+                        id INT PRIMARY KEY,
+                        c_string VARCHAR(255),
+                        c_boolean BOOLEAN,
+                        c_byte TINYINT,
+                        c_short SMALLINT,
+                        c_int INT,
+                        c_long BIGINT,
+                        c_float REAL,
+                        c_double DOUBLE PRECISION,
+                        c_bigdecimal DECIMAL(10, 2),
+                        c_bytes VARBINARY(255),
+                        c_date DATE,
+                        c_time TIME,
+                        c_timestamp TIMESTAMP,
+                        c_ascii CLOB,
+                        c_char CLOB,
+                        c_binary BLOB,
+                        c_object VARCHAR(255),
+                        c_array INT ARRAY,
+                        c_localdate DATE
+                    )
+                    """.trimIndent()
+                )
+
+                update(
+                    """
+                    INSERT INTO test_getters_null (
+                        id, c_string, c_boolean, c_byte, c_short, c_int, c_long, c_float, c_double,
+                        c_bigdecimal, c_bytes, c_date, c_time, c_timestamp, c_ascii, c_char,
+                        c_binary, c_object, c_array, c_localdate
+                    ) VALUES (
+                        2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                        NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                        NULL, NULL, NULL, NULL
+                    )
+                    """.trimIndent()
+                ).requireUpdates(1)
+
+                select("SELECT c_string, c_boolean, c_byte, c_short, c_int, c_long, c_float, c_double, c_bigdecimal, c_bytes, c_date, c_time, c_timestamp, c_ascii, c_char, c_binary, c_object, c_array, c_localdate FROM test_getters_null WHERE id = 2") {
+                    readRecords {
+                        assertNull(getString())
+                        assertNull(getBoolean())
+                        assertNull(getByte())
+                        assertNull(getShort())
+                        assertNull(getInt())
+                        assertNull(getLong())
+                        assertNull(getFloat())
+                        assertNull(getDouble())
+                        assertNull(getBigDecimal())
+                        assertNull(getBytes())
+                        assertNull(getDate())
+                        assertNull(getTime())
+                        assertNull(getTimestamp())
+                        assertNull(getAsciiStream())
+                        assertNull(getCharacterStream())
+                        assertNull(getBinaryStream())
+                        assertNull(getObject())
+                        assertNull(getArray())
+                        assertNull(getLocalDate())
+                    }
+                }.also {
+                    assertEquals(1, it.size)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun testOrNull() {
+        runTestDB { db ->
+            db.withTransaction {
+                update("CREATE TABLE IF NOT EXISTS test_ornull (id INT PRIMARY KEY, val INT)")
+                update("INSERT INTO test_ornull VALUES (1, NULL)")
+                select("SELECT val FROM test_ornull WHERE id = 1") {
+                    while (next()) {
+                        val v = getInt(1)
+                        assertNull(orNull(v))
+                    }
+                }
+            }
+        }
+    }
+}

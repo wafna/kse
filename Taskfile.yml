@@ -1,0 +1,24 @@
+version: '3'
+silent: true
+tasks:
+  default:
+    cmds:
+      - task: test
+  build:
+    cmds:
+      - ./gradlew --warning-mode all build
+  dev:
+    cmds:
+      - ./gradlew -PBUILD_MODE=DEV --warning-mode all build
+  clean:
+    cmds:
+      - ./gradlew --warning-mode all clean
+  test:
+    cmds:
+      - ./gradlew --warning-mode all test
+  check:
+    cmds:
+      - ./gradlew --warning-mode all --rerun-tasks check
+  deps:
+    cmds:
+      - ./gradlew --no-parallel dependencyUpdates | tee ../.local/dependency-update.txt
