@@ -32,7 +32,7 @@ class TestDatabase {
                     "INSERT INTO users (id, name) VALUES (?, ?)",
                     // List and parameterize.
                     users.map {
-                        listOf(it.id.paramInt(), it.name.paramString())
+                        listOf(it.id.setInt(), it.name.setString())
                     }.iterator()
                 ).requireInserts(users.size)
                 select("SELECT id, name FROM users") {
@@ -48,7 +48,7 @@ class TestDatabase {
                     }
                 }
                 val newName = "Carol"
-                update("UPDATE users SET name = ? WHERE id = ?", newName.paramString(), users[0].id.paramInt())
+                update("UPDATE users SET name = ? WHERE id = ?", newName.setString(), users[0].id.setInt())
                     .requireUpdates(1)
                 select("SELECT id, name FROM users") {
                     readRecords {
@@ -63,5 +63,8 @@ class TestDatabase {
                 }
             }
         }
+    }
+    @Test fun testSetters() {
+
     }
 }

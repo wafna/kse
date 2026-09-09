@@ -16,7 +16,7 @@ In this simple example, we start a transaction on the data source and select two
 
 ```kotlin
 dataSource.withTransaction {
-    select("SELECT id, name FROM test WHERE id = ?", 1.paramInt()) {
+    select("SELECT id, name FROM test WHERE id = ?", 1.setInt()) {
         readRecords {
             val id = getInt()
             val name = getString()
