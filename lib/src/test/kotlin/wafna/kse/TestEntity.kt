@@ -23,6 +23,7 @@ class TestEntity {
 internal fun testEntity(schema: String?) {
     val tableName = "TEST_ENTITY"
     val userEntity = object : Entity<User>(
+        // Uses both constructors.
         table = if (null == schema) Table(tableName) else Table(listOf(schema), tableName),
         fields = listOf("ID".field, "NAME".field)
     ) {
@@ -35,9 +36,7 @@ internal fun testEntity(schema: String?) {
     }
     runTestDB { db ->
         db.withTransaction {
-            "${if (null == schema) "" else "$schema."}$tableName".let { tableQName ->
-                update("CREATE TABLE IF NOT EXISTS $tableQName (id INT PRIMARY KEY, name VARCHAR(255))")
-            }
+            update("CREATE TABLE IF NOT EXISTS ${"${if (null == schema) "" else "$schema."}$tableName"} (id INT PRIMARY KEY, name VARCHAR(255))")
             val alice = User(1, "Alice")
             val bob = User(2, "Bob")
             val users = listOf(alice, bob)
