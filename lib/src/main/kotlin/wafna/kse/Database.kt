@@ -102,7 +102,7 @@ suspend fun update(
     executeUpdate()
 }
 
-context(cx: Connection)
+context(_: Connection)
 suspend fun update(
     sql: String,
     params: Iterable<Param>,
@@ -112,9 +112,9 @@ suspend fun update(
 }
 
 context(cx: Connection)
-fun String.quoteIdentifier(): String = cx.metaData.identifierQuoteString.let {
-    "$it$this$it"
-}
+fun String.quoteIdentifier(): String =
+    cx.metaData.identifierQuoteString.let { "$it$this$it" }
 
-context(cx: Connection)
-fun Iterable<String>.quoteIdentifiers(): String = joinToString(".") { it.quoteIdentifier() }
+context(_: Connection)
+fun Iterable<String>.quoteIdentifiers(): String =
+    joinToString(".") { it.quoteIdentifier() }
