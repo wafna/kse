@@ -3,7 +3,7 @@ package wafna.kse
 import org.slf4j.Logger
 
 /**
- * Listens to actions performed by the database.
+ * Listens to actions performed on the database.
  */
 interface Listener {
     fun execute(sql: String)
@@ -29,6 +29,7 @@ object ListenerNOOP : Listener {
 
 /**
  * Lazy logging enabled listener.
+ * Provides methods that check the log level before calculating the message.
  */
 @Suppress("unused") // verified by inspection
 abstract class LoggingListener(val log: Logger) : Listener {

@@ -1,6 +1,8 @@
 .kotlin/
 .gradle
 build
+# Working dir, creds, etc.
+.local/
 # Intellij
 .idea/
 .junie/

@@ -19,6 +19,17 @@ tasks:
   check:
     cmds:
       - ./gradlew --warning-mode all --rerun-tasks check
+  javadoc:
+    cmds:
+      - ./gradlew --warning-mode all javadoc
   deps:
     cmds:
       - ./gradlew --no-parallel dependencyUpdates | tee ../.local/dependency-update.txt
+  publish-local:
+    cmds:
+      - source .local/sonatype.sh && source .local/signing-keys.sh &&
+        ./gradlew --warning-mode all publishToMavenLocal
+  publish-central:
+    cmds:
+      - source .local/sonatype.sh && source .local/signing-keys.sh &&
+          ./gradlew --warning-mode all publishMavenPublicationToSonatypeCentralRepository

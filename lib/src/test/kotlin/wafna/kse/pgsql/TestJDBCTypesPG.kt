@@ -4,9 +4,6 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.Month
-import wafna.kse.orNull
 import wafna.kse.readRecords
 import wafna.kse.requireUpdates
 import wafna.kse.select
@@ -21,7 +18,6 @@ import wafna.kse.setDate
 import wafna.kse.setDouble
 import wafna.kse.setFloat
 import wafna.kse.setInt
-import wafna.kse.setLocalDate
 import wafna.kse.setLong
 import wafna.kse.setObject
 import wafna.kse.setShort
@@ -60,8 +56,7 @@ class TestJDBCTypesPG {
                         c_char TEXT,
                         c_binary BYTEA,
                         c_object VARCHAR(255),
-                        c_array INT ARRAY,
-                        c_localdate DATE
+                        c_array INT ARRAY
                     )
                     """.trimIndent()
                 )
@@ -71,7 +66,6 @@ class TestJDBCTypesPG {
                 val expectedTimestamp = Timestamp.valueOf("2026-09-09 14:30:00.123")
                 val expectedBytes = byteArrayOf(1, 2, 3, 4, 5)
                 val expectedBigDecimal = BigDecimal("123.45")
-                val expectedLocalDate = LocalDate(2026, Month.SEPTEMBER, 9)
                 val expectedArray = listOf(10, 20, 30)
 
                 update(
@@ -79,9 +73,9 @@ class TestJDBCTypesPG {
                     INSERT INTO test_getters_all (
                         id, c_string, c_boolean, c_byte, c_short, c_int, c_long, c_float, c_double,
                         c_bigdecimal, c_bytes, c_date, c_time, c_timestamp, c_char,
-                        c_binary, c_object, c_array, c_localdate
+                        c_binary, c_object, c_array
                     ) VALUES (
-                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                     )
                     """.trimIndent(),
                     1.setInt(),
@@ -101,11 +95,10 @@ class TestJDBCTypesPG {
                     "char_text".reader().setCharacterStream(),
                     expectedBytes.inputStream().setBinaryStream(),
                     "custom_object".setObject(),
-                    expectedArray.setArray("INTEGER"),
-                    expectedLocalDate.setLocalDate()
+                    expectedArray.setArray("INTEGER")
                 ).requireUpdates(1)
 
-                select("SELECT c_string, c_boolean, c_byte, c_short, c_int, c_long, c_float, c_double, c_bigdecimal, c_bytes, c_date, c_time, c_timestamp, c_char, c_binary, c_object, c_array, c_localdate FROM test_getters_all WHERE id = 1") {
+                select("SELECT c_string, c_boolean, c_byte, c_short, c_int, c_long, c_float, c_double, c_bigdecimal, c_bytes, c_date, c_time, c_timestamp, c_char, c_binary, c_object, c_array FROM test_getters_all WHERE id = 1") {
                     readRecords {
                         assertEquals("sample_string", getString())
                         assertEquals(true, getBoolean())
@@ -125,7 +118,6 @@ class TestJDBCTypesPG {
                         assertEquals("custom_object", getObject())
                         val arrayResult = (getArray()?.array as? Array<*>)?.toList()
                         assertEquals(expectedArray, arrayResult)
-                        assertEquals(expectedLocalDate, getLocalDate())
                     }
                 }.also {
                     assertEquals(1, it.size)
@@ -159,8 +151,7 @@ class TestJDBCTypesPG {
                         c_char TEXT,
                         c_binary BYTEA,
                         c_object VARCHAR(255),
-                        c_array INT ARRAY,
-                        c_localdate DATE
+                        c_array INT ARRAY
                     )
                     """.trimIndent()
                 )
@@ -170,16 +161,16 @@ class TestJDBCTypesPG {
                     INSERT INTO test_getters_null (
                         id, c_string, c_boolean, c_byte, c_short, c_int, c_long, c_float, c_double,
                         c_bigdecimal, c_bytes, c_date, c_time, c_timestamp, c_ascii, c_char,
-                        c_binary, c_object, c_array, c_localdate
+                        c_binary, c_object, c_array
                     ) VALUES (
                         2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                         NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                        NULL, NULL, NULL, NULL
+                        NULL, NULL, NULL
                     )
                     """.trimIndent()
                 ).requireUpdates(1)
 
-                select("SELECT c_string, c_boolean, c_byte, c_short, c_int, c_long, c_float, c_double, c_bigdecimal, c_bytes, c_date, c_time, c_timestamp, c_ascii, c_char, c_binary, c_object, c_array, c_localdate FROM test_getters_null WHERE id = 2") {
+                select("SELECT c_string, c_boolean, c_byte, c_short, c_int, c_long, c_float, c_double, c_bigdecimal, c_bytes, c_date, c_time, c_timestamp, c_ascii, c_char, c_binary, c_object, c_array FROM test_getters_null WHERE id = 2") {
                     readRecords {
                         assertNull(getString())
                         assertNull(getBoolean())
@@ -199,26 +190,9 @@ class TestJDBCTypesPG {
                         assertNull(getBinaryStream())
                         assertNull(getObject())
                         assertNull(getArray())
-                        assertNull(getLocalDate())
                     }
                 }.also {
                     assertEquals(1, it.size)
-                }
-            }
-        }
-    }
-
-    @Test
-    fun testOrNull() {
-        withPGDB { db ->
-            db.withTransaction {
-                update("CREATE TABLE IF NOT EXISTS test_ornull (id INT PRIMARY KEY, val INT)")
-                update("INSERT INTO test_ornull VALUES (1, NULL)")
-                select("SELECT val FROM test_ornull WHERE id = 1") {
-                    while (next()) {
-                        val v = getInt(1)
-                        assertNull(orNull(v))
-                    }
                 }
             }
         }

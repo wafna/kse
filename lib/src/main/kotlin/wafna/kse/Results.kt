@@ -1,7 +1,5 @@
 package wafna.kse
 
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.Month
 import java.io.InputStream
 import java.io.Reader
 import java.math.BigDecimal
@@ -9,7 +7,7 @@ import java.sql.Array
 import java.sql.ResultSet
 import java.sql.Timestamp
 
-/** Enforces that the result of a SELECT contains no more that one record. */
+/** Enforces that the result of a SELECT contains no more than one record. */
 val <T> List<T>.optional: T?
     get() =
         when (size) {
@@ -18,6 +16,7 @@ val <T> List<T>.optional: T?
             else -> throw IllegalStateException("Multiple results received.")
         }
 
+/** Enforces that the result of a SELECT contains exactly one record. */
 val <T> List<T>.unique: T
     get() = optional ?: throw IllegalStateException("No results received for $this")
 
@@ -35,8 +34,8 @@ fun IntArray.requireInserts(count: Int) = sum().let {
 }
 
 /**
- * Convenience class for reading the fields from a ResultSet in fixed order, e.g. the declared field
- * order in an Entity. This also makes the nullability of data from the ResultSet more explicit.
+ * Convenience class for reading the fields from a ResultSet in selection order, e.g. the declared field
+ * order in an Entity.
  */
 @Suppress("JavaDefaultMethodsNotOverriddenByDelegation")
 class ResultIterator(val rs: ResultSet) : ResultSet by rs {
@@ -62,21 +61,17 @@ class ResultIterator(val rs: ResultSet) : ResultSet by rs {
     fun getBinaryStream(): InputStream? = getBinaryStream(next)
     fun getObject(): Any? = getObject(next)
     fun getArray(): Array? = getArray(next)
-    fun getLocalDate(): LocalDate? =
-        getDate(next)?.toLocalDate()?.let { ld ->
-            LocalDate(ld.year, Month(ld.month.value), ld.dayOfMonth)
-        }
 }
 
-// Guards NULL for primitive types.
-fun <K> ResultSet.orNull(value: K): K? = if (wasNull()) null else value
+/** ResultSet.wasNull */
+private fun <K> ResultSet.orNull(value: K): K? =
+    if (wasNull()) null else value
 
 /** Read a single record from a result set using a field iterator function. */
-inline fun <R> ResultSet.readRecord(run: ResultIterator.() -> R): R = ResultIterator(this).run()
+inline fun <R> ResultSet.readRecord(read: ResultIterator.() -> R): R =
+    ResultIterator(this).read()
 
 /** Read all the records from a result set using a field iterator function. */
-inline fun <R> ResultSet.readRecords(run: ResultIterator.() -> R): List<R> =
-    buildList {
-        while (next()) add(readRecord(run))
-    }
+inline fun <R> ResultSet.readRecords(read: ResultIterator.() -> R): List<R> =
+    buildList { while (next()) add(readRecord(read)) }
 

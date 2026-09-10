@@ -17,9 +17,7 @@ fun String.field(sqlType: String? = null) = Field(this, sqlType)
 val String.field: Field
     get() = Field(this, null)
 
-/**
- * The fully qualified table name.
- */
+/** The fully qualified table name. */
 data class Table(val schemas: List<String>, val tableName: String) {
     init {
         require(schemas.all { it.isNotEmpty() }) {
@@ -47,11 +45,12 @@ abstract class Entity<R>(val table: Table, val fields: List<Field>) {
         }
     }
 
+    /**
+     * Generates the comma separated list of alias qualified field names.
+     */
     fun projection(alias: String): String = fields.joinToString(", ") {
         if (alias.isEmpty()) "\"${it.name}\"" else "\"$alias\".\"${it.name}\""
     }
-
-    val fieldMap = fields.associateBy { it.name }
 
     abstract fun read(resultSet: ResultIterator): R
 
@@ -64,13 +63,11 @@ abstract class Entity<R>(val table: Table, val fields: List<Field>) {
 
     /** Generates the head of a SELECT statement. */
     context(_: Connection)
-    fun selectHead(alias: String = ""): String =
+    private fun selectHead(alias: String = ""): String =
         "SELECT ${projection(alias)}\nFROM ${table.qname()}${if (alias.isEmpty()) " " else " \"$alias\""}"
 
     /**
-     * @param alias The alias applied to the table in the head.
-     * @param tail The SQL following the head, e.g. JOIN and WHERE.
-     * @param params The values of the arguments in the SQL in lexical order.
+     * SELECT <<alias>>.projection FROM table <<alias>> <<tail>>
      */
     context(_: Connection, _: Listener)
     suspend fun select(
@@ -79,6 +76,9 @@ abstract class Entity<R>(val table: Table, val fields: List<Field>) {
         vararg params: Param,
     ): List<R> = select("${selectHead(alias)}\n$tail", *params) { readRecords(::read) }
 
+    /**
+     * SELECT <<alias>>.projection FROM table <<alias>> <<tail>>
+     */
     context(c_: Connection, _: Listener)
     suspend fun select(
         alias: String,
@@ -90,22 +90,24 @@ abstract class Entity<R>(val table: Table, val fields: List<Field>) {
         }
 
     /**
-     * Every INSERT has the same form. This variable form is useful for tables with default fields
-     * that are not inserted (e.g. deleted_at). This enforces that the fields exist.
+     * INSERT INTO table (<<field-names>>) VALUES (<<records>>)
      */
-    context(_: Connection)
-    private fun insertHead(fieldNames: Iterable<String>): String =
-        """INSERT INTO ${table.qname()} (${fieldNames.joinToString(", ") { it.quoteIdentifier() }})
-            VALUES (${parameterList(namesToFields(fieldNames))})""".trimIndent()
-
     context(_: Connection, _: Listener)
     suspend fun insert(
         records: Iterable<R>,
-    ): IntArray = insert(
-        sql = insertHead(fields.map { it.name }),
-        records = records.transformer { write(it) },
-    )
+    ): IntArray {
+        contextOf<Connection>()
+        val fieldNames = fields.map { it.name }
+        return insert(
+            sql = """INSERT INTO ${table.qname()} (${fieldNames.joinToString(", ") { it.quoteIdentifier() }})
+                VALUES (${parameterList(namesToFields(fieldNames))})""".trimIndent(),
+            records = records.transformer { write(it) },
+        )
+    }
 
+    /**
+     * UPDATE table SET <<field-names>> WHERE <<where>>
+     */
     context(_: Connection, _: Listener)
     suspend fun update(
         fieldNames: Iterable<String>,
@@ -116,6 +118,9 @@ abstract class Entity<R>(val table: Table, val fields: List<Field>) {
         params = params,
     )
 
+    /**
+     * UPDATE table SET <<field-names>> WHERE <<where>>
+     */
     context(_: Connection, _: Listener)
     suspend fun update(
         fieldNames: Iterable<String>,
@@ -126,7 +131,9 @@ abstract class Entity<R>(val table: Table, val fields: List<Field>) {
         params,
     )
 
-    fun namesToFields(names: Iterable<String>): List<Field> =
+    private val fieldMap = fields.associateBy { it.name }
+
+    private fun namesToFields(names: Iterable<String>): List<Field> =
         names.map { fieldMap[it] ?: error("Unknown field \"$it\"") }
 
     companion object {

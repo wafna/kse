@@ -16,13 +16,18 @@ import java.sql.Types
  * Carries parameter values to be interpolated into SQL statements.
  */
 abstract class Param {
+    /**
+     * Sets its value at the given position in the prepared statement.
+     */
     abstract fun set(statement: PreparedStatement, parameterIndex: Int)
-    // For debugging and listening.
+    /**
+     * For debugging and listening.
+     */
     abstract fun inspect(): String
 }
 
 /**
- * Explicitly sets NULL into the SQL statement.
+ * Sets SQL NULL into the SQL statement.
  */
 object NullParam : Param() {
     override fun set(statement: PreparedStatement, parameterIndex: Int) {
@@ -33,7 +38,7 @@ object NullParam : Param() {
 }
 
 /**
- * Carries a non null value parameter.
+ * Carries a non-null value parameter.
  */
 abstract class ValueParam<T>(val value: T) : Param() {
     override fun inspect(): String = value.toString()

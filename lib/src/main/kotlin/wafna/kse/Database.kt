@@ -70,6 +70,9 @@ private suspend inline fun <T> withStatement(
         }
 }
 
+/**
+ * PreparedStatment.executeQuery()
+ */
 context(_: Connection, listener: Listener)
 suspend fun <T> select(
     sql: String,
@@ -84,7 +87,7 @@ suspend fun <T> select(
 }
 
 /**
- * <code>executeBatch()</code>
+ * PreparedStatment.executeBatch()
  * To simplify usage and reduce memory footprint, the records are presented as an Iterator.
  * Callers should produce the param lists for each record on demand.
  */
@@ -103,6 +106,10 @@ suspend fun insert(
         executeBatch()
     }
 }
+
+/**
+ * PreparedStatment.executeUpdate()
+ */
 context(_: Connection, listener: Listener)
 suspend fun update(
     sql: String,
@@ -114,6 +121,10 @@ suspend fun update(
         executeUpdate()
     }
 }
+
+/**
+ * PreparedStatment.executeUpdate()
+ */
 context(_: Connection, listener: Listener)
 suspend fun update(
     sql: String,
@@ -125,10 +136,17 @@ suspend fun update(
         executeUpdate()
     }
 }
+
+/**
+ * Surrounds an identifier in quotes.
+ */
 context(cx: Connection)
 fun String.quoteIdentifier(): String =
     cx.metaData.identifierQuoteString.let { "$it$this$it" }
 
+/**
+ * Produces a dot-separated list of quoted identifiers, i.e. for qualified names.
+ */
 context(_: Connection)
 fun Iterable<String>.quoteIdentifiers(): String =
     joinToString(".") { it.quoteIdentifier() }
