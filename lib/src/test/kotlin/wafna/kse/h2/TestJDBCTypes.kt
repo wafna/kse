@@ -39,7 +39,7 @@ import wafna.kse.withTransaction
 class TestJDBCTypes {
     @Test
     fun testAllNonNull() {
-        runTestDB { db ->
+        withH2DB { db ->
             db.withTransaction {
                 update(
                     """
@@ -140,7 +140,7 @@ class TestJDBCTypes {
 
     @Test
     fun testAllNull() {
-        runTestDB { db ->
+        withH2DB { db ->
             db.withTransaction {
                 update(
                     """
@@ -214,7 +214,7 @@ class TestJDBCTypes {
 
     @Test
     fun testOrNull() {
-        runTestDB { db ->
+        withH2DB { db ->
             db.withTransaction {
                 update("CREATE TABLE IF NOT EXISTS test_ornull (id INT PRIMARY KEY, val INT)")
                 update("INSERT INTO test_ornull VALUES (1, NULL)")

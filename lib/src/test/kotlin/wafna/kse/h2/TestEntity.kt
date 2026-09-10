@@ -47,7 +47,7 @@ internal fun testEntity(schema: String?) {
         override fun write(record: User): List<Param> =
             listOf(record.id.setInt(), record.name.setString())
     }
-    runTestDB { db ->
+    withH2DB { db ->
         db.withTransaction {
             update("CREATE TABLE IF NOT EXISTS ${"${if (null == schema) "" else "$schema."}$tableName"} (id INT PRIMARY KEY, name VARCHAR(255))")
             val alice = User(1, "Alice")

@@ -1,10 +1,10 @@
-package wafna.kse.h2
+package wafna.kse.pgsql
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import wafna.kse.h2.User
 import wafna.kse.insert
-import wafna.kse.quoteIdentifiers
 import wafna.kse.readRecords
 import wafna.kse.requireInserts
 import wafna.kse.requireUpdates
@@ -16,18 +16,8 @@ import wafna.kse.withTransaction
 
 class TestDatabase {
     @Test
-    fun testQuoteIdentifier() {
-        withH2DB { db ->
-            db.withTransaction {
-            assertEquals(
-                """"a"."b"."c"""",
-                listOf("a", "b", "c").quoteIdentifiers())
-            }
-    }
-    }
-    @Test
     fun test() {
-        withH2DB { db ->
+        withPGDB { db ->
             db.withTransaction {
                 update("CREATE TABLE kse.users (id INT PRIMARY KEY, name VARCHAR(255))")
                 val alice = User(1, "Alice")
