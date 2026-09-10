@@ -109,3 +109,16 @@ val selectedUsers = userEntity.select("U", "WHERE U.ID = ?", 1.paramInt())
 
 The example, above, demonstrates the convenience of using an Entity.
 Note that the select function requires an alias for the table and an optional tail for the generated SQL.
+
+## Listeners
+
+A listener facility is provided for logging and debugging database activity.
+It is provided, optionally, in the *withTransaction* function.
+The default does nothing.
+
+The listener methods receive data about various events, namely the SQL statement and their parameters, as applicable.
+The *Param* class has an *inspect* method that, by default, renders the value natively as a string (including null).
+
+An Listener implementation is provided with lazy logging methods.
+These methods test the log level before committing to avoid unnecessary string formatting.
+It is based on *slf4j* because everything else seems to be.

@@ -12,14 +12,20 @@ object TestLoggingListener : LoggingListener(log) {
     }
 
     override fun select(sql: String, params: List<Param>) {
-        info { "SELECT SQL\n$sql${params.joinToString { "\n\t${it.inspect()}" }}" }
+        info { "SELECT SQL\n$sql${params.showParams()}" }
     }
 
     override fun insert(sql: String) {
         info { "INSERT SQL\n$sql" }
     }
 
+    override fun insertRecord(values: List<Param>) {
+        info { "INSERT RECORD${values.showParams()}" }
+    }
+
     override fun update(sql: String, params: List<Param>) {
-        info { "UPDATE SQL\n$sql${params.joinToString { "\n\t${it.inspect()}" }}" }
+        info { "UPDATE SQL\n$sql${params.showParams()}" }
     }
 }
+
+private fun List<Param>.showParams() = withIndex().joinToString("") { "\n\t[${1 + it.index}] ${it.value.inspect()}" }

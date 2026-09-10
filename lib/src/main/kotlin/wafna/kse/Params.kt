@@ -50,6 +50,12 @@ fun <T> T?.setNullable(setter: (PreparedStatement, Int, T) -> Unit): Param =
         }
     }
 
+/**
+ * For custom ValueParam implementations.
+ */
+fun <T> T?.setNullable(valueParam: ValueParam<T>): Param =
+    if (null == this) NullParam else valueParam
+
 fun String?.setString(): Param = setNullable { statement, parameterIndex, value ->
     statement.setString(parameterIndex, value)
 }
@@ -123,8 +129,6 @@ fun Any?.setObject(): Param = setNullable { statement, parameterIndex, value ->
 }
 
 context(cx: Connection)
-inline fun <reified K> Collection<K>.setArray(type: String): Param =
-    setNullable { statement, position, value ->
-        statement.setArray(position, cx.createArrayOf(type, value.toTypedArray<K>()))
-    }
-
+inline fun <reified K> Collection<K>.setArray(type: String): Param = setNullable { statement, position, value ->
+    statement.setArray(position, cx.createArrayOf(type, value.toTypedArray<K>()))
+}

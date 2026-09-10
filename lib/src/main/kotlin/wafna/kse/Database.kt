@@ -9,51 +9,6 @@ import java.sql.ResultSet
 class DBException(msg: String, cause: Throwable) : RuntimeException(msg, cause)
 
 /**
- * Listens to actions performed by the database.
- */
-interface Listener {
-    fun execute(sql: String)
-    fun select(sql: String, params: List<Param>)
-    fun insert(sql: String)
-    fun update(sql: String, params: List<Param>)
-}
-
-/**
- * Does nothing; the default.
- */
-object ListenerNOOP : Listener {
-    override fun execute(sql: String) {}
-    override fun select(sql: String, params: List<Param>) {}
-    override fun insert(sql: String) {}
-    override fun update(sql: String, params: List<Param>) {}
-}
-
-/**
- * Lazy logging enabled listener.
- */
-abstract class LoggingListener(val log: Logger) : Listener {
-    fun trace(s: () -> String) {
-        if (log.isTraceEnabled) log.trace(s())
-    }
-
-    fun debug(s: () -> String) {
-        if (log.isDebugEnabled) log.debug(s())
-    }
-
-    fun info(s: () -> String) {
-        if (log.isInfoEnabled) log.info(s())
-    }
-
-    fun warn(s: () -> String) {
-        if (log.isWarnEnabled) log.warn(s())
-    }
-
-    fun error(s: () -> String) {
-        if (log.isErrorEnabled) log.error(s())
-    }
-}
-
-/**
  * Execute the given block within a transaction.
  * The transaction is committed if the block completes normally and rolled back if it throws an exception.
  */
@@ -141,6 +96,7 @@ suspend fun insert(
     listener.insert(sql)
     return withStatement(sql) {
         records.forEach { record ->
+            listener.insertRecord(record)
             setParams(record)
             addBatch()
         }
