@@ -2,7 +2,7 @@ package wafna.kse.h2
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import wafna.kse.common.testDatabase
+import wafna.kse.common.testDataSource
 import wafna.kse.quoteIdentifiers
 import wafna.kse.withTransaction
 
@@ -19,7 +19,7 @@ class TestDatabase {
         }
     }
     @Test
-    fun test() {
-        withH2DB { testDatabase(it) }
+    fun testDatabase() {
+        withH2DB { testDataSource(it) }
     }
 }
