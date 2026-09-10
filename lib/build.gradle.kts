@@ -22,11 +22,10 @@ repositories {
 }
 
 dependencies {
-    // This dependency is exported to consumers, that is to say found on their compile classpath.
-    api(libs.commons.math3)
-
-    // This dependency is used internally, and not exposed to consumers on their own compile classpath.
-    implementation(libs.guava)
+    implementation("org.slf4j:slf4j-api:2.1.0-alpha1")
+    @Suppress("VulnerableLibrariesLocal", "RedundantSuppression")
+    implementation("ch.qos.logback:logback-classic:1.5.38")
+    implementation("org.apache.logging.log4j:log4j-core:3.0.0-beta3")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.8.0-0.6.x-compat")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     testImplementation("com.zaxxer:HikariCP:7.1.0")

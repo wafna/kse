@@ -1,9 +1,5 @@
 package wafna.kse.pgsql
 
-import java.math.BigDecimal
-import java.sql.Date
-import java.sql.Time
-import java.sql.Timestamp
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -34,6 +30,10 @@ import wafna.kse.setTime
 import wafna.kse.setTimestamp
 import wafna.kse.update
 import wafna.kse.withTransaction
+import java.math.BigDecimal
+import java.sql.Date
+import java.sql.Time
+import java.sql.Timestamp
 
 class TestJDBCTypesPG {
     @Test

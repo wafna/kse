@@ -15,7 +15,7 @@ import wafna.kse.update
 import wafna.kse.withTransaction
 
 suspend fun testDataSource(db: DataSource) {
-    db.withTransaction {
+    db.withTransaction(TestLoggingListener) {
         update("CREATE TABLE kse.users (id INT PRIMARY KEY, name VARCHAR(255))")
         val alice = User(1, "Alice")
         val bob = User(2, "Bob")

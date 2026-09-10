@@ -1,5 +1,7 @@
 package wafna.kse
 
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.toJavaLocalDate
 import java.io.InputStream
 import java.io.Reader
 import java.math.BigDecimal
@@ -9,22 +11,39 @@ import java.sql.PreparedStatement
 import java.sql.Time
 import java.sql.Timestamp
 import java.sql.Types
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.util.*
-import kotlin.time.Instant
-import kotlin.time.toJavaInstant
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.toJavaLocalDate
 
-typealias Param = (statement: PreparedStatement, parameterIndex: Int) -> Unit
+/**
+ * Carries parameter values to be interpolated into SQL statements.
+ */
+abstract class Param {
+    abstract fun set(statement: PreparedStatement, parameterIndex: Int)
+    // For debugging and listening.
+    abstract fun inspect(): String
+}
 
-val setNull: Param = { statement, parameterIndex -> statement.setNull(parameterIndex, Types.NULL) }
+/**
+ * Explicitly sets NULL into the SQL statement.
+ */
+object NullParam : Param() {
+    override fun set(statement: PreparedStatement, parameterIndex: Int) {
+        statement.setNull(parameterIndex, Types.NULL)
+    }
 
-/** Explicitly sets NULL for null parameters. */
+    override fun inspect(): String = "NULL"
+}
+
+abstract class ValueParam<T>(val value: T) : Param() {
+    override fun inspect(): String = value.toString()
+}
+
+/** Sets NULL for null parameters. */
 fun <T> T?.setNullable(setter: (PreparedStatement, Int, T) -> Unit): Param =
-    if (null == this) setNull
-    else { statement, parameterIndex -> setter(statement, parameterIndex, this) }
+    if (null == this) NullParam
+    else object : ValueParam<T & Any>(this) {
+        override fun set(statement: PreparedStatement, parameterIndex: Int) {
+            setter(statement, parameterIndex, this@setNullable)
+        }
+    }
 
 fun String?.setString(): Param = setNullable { statement, parameterIndex, value ->
     statement.setString(parameterIndex, value)
@@ -90,17 +109,17 @@ fun InputStream?.setBinaryStream(): Param = setNullable { statement, parameterIn
     statement.setBinaryStream(parameterIndex, value)
 }
 
-fun Instant?.setInstant(): Param = setNullable { statement, parameterIndex, value ->
-    val dateTime =
-        LocalDateTime.ofInstant(
-            value.toJavaInstant(),
-            ZoneId.of(Calendar.getInstance().timeZone.id),
-        )
-    statement.setTimestamp(parameterIndex, Timestamp.valueOf(dateTime))
-}
+//fun Instant?.setInstant(): Param = setNullable { statement, parameterIndex, value ->
+//    val dateTime =
+//        LocalDateTime.ofInstant(
+//            value.toJavaInstant(),
+//            ZoneId.of(Calendar.getInstance().timeZone.id),
+//        )
+//    statement.setTimestamp(parameterIndex, Timestamp.valueOf(dateTime))
+//}
 
 fun LocalDate?.setLocalDate(): Param = setNullable { statement, parameterIndex, value ->
-    statement.setDate(parameterIndex, java.sql.Date.valueOf(value.toJavaLocalDate()))
+    statement.setDate(parameterIndex, Date.valueOf(value.toJavaLocalDate()))
 }
 
 fun Any?.setObject(): Param = setNullable { statement, parameterIndex, value ->

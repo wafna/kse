@@ -72,14 +72,14 @@ abstract class Entity<R>(val table: Table, val fields: List<Field>) {
      * @param tail The SQL following the head, e.g. JOIN and WHERE.
      * @param params The values of the arguments in the SQL in lexical order.
      */
-    context(cx: Connection)
+    context(_: Connection, _: Listener)
     suspend fun select(
         alias: String,
         tail: String,
         vararg params: Param,
     ): List<R> = select("${selectHead(alias)}\n$tail", *params) { readRecords(::read) }
 
-    context(cx: Connection)
+    context(c_: Connection, _: Listener)
     suspend fun select(
         alias: String,
         tail: String,
@@ -93,12 +93,12 @@ abstract class Entity<R>(val table: Table, val fields: List<Field>) {
      * Every INSERT has the same form. This variable form is useful for tables with default fields
      * that are not inserted (e.g. deleted_at). This enforces that the fields exist.
      */
-    context(cx: Connection)
+    context(_: Connection)
     private fun insertHead(fieldNames: Iterable<String>): String =
         """INSERT INTO ${table.qname()} (${fieldNames.joinToString(", ") { it.quoteIdentifier() }})
             VALUES (${parameterList(namesToFields(fieldNames))})""".trimIndent()
 
-    context(cx: Connection)
+    context(_: Connection, _: Listener)
     suspend fun insert(
         records: Iterable<R>,
     ): IntArray = insert(
@@ -106,7 +106,7 @@ abstract class Entity<R>(val table: Table, val fields: List<Field>) {
         records = records.transformer { write(it) },
     )
 
-    context(cx: Connection)
+    context(_: Connection, _: Listener)
     suspend fun update(
         fieldNames: Iterable<String>,
         where: String,
@@ -116,7 +116,7 @@ abstract class Entity<R>(val table: Table, val fields: List<Field>) {
         params = params,
     )
 
-    context(cx: Connection)
+    context(_: Connection, _: Listener)
     suspend fun update(
         fieldNames: Iterable<String>,
         where: String,
