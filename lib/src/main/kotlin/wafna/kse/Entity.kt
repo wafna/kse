@@ -127,7 +127,7 @@ abstract class Entity<R>(val table: Table, val fields: List<Field>) {
     )
 
     fun namesToFields(names: Iterable<String>): List<Field> =
-        names.map { fieldMap[it] ?: error("Unknown field name $it") }
+        names.map { fieldMap[it] ?: error("Unknown field \"$it\"") }
 
     companion object {
         fun fieldList(fields: Iterable<Field>): String =
