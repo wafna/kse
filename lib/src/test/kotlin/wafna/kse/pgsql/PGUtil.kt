@@ -16,24 +16,22 @@ fun withPGDB(borrow: suspend (DataSource) -> Unit) {
         .withDatabaseName("test")
         .withUsername("username")
         .withPassword("password")
-        ?.apply {
-            start()
-            use { container ->
-                val config =
-                    HikariConfig().apply {
-                        jdbcUrl = container.jdbcUrl
-                        username = container.username
-                        password = container.password
-                        driverClassName = container.driverClassName
-                        maximumPoolSize = 32
-                    }
-                runBlocking {
-                    val db = HikariDataSource(config)
-                    db.withTransaction {
-                        update("CREATE SCHEMA IF NOT EXISTS kse")
-                    }
-                    borrow(db)
+        ?.use { container ->
+            container.start()
+            val config =
+                HikariConfig().apply {
+                    jdbcUrl = container.jdbcUrl
+                    username = container.username
+                    password = container.password
+                    driverClassName = container.driverClassName
+                    maximumPoolSize = 32
                 }
+            runBlocking {
+                val db = HikariDataSource(config)
+                db.withTransaction {
+                    update("CREATE SCHEMA IF NOT EXISTS kse")
+                }
+                borrow(db)
             }
         } ?: fail("Failed to create container.")
 }
