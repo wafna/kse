@@ -8,13 +8,14 @@ import java.sql.ResultSet
 class DBException(msg: String, cause: Throwable) : RuntimeException(msg, cause)
 
 /**
- * Execute the given block within a transaction. The transaction is committed if the block completes
- * normally and rolled back if it throws an exception.
+ * Execute the given block within a transaction.
+ * The transaction is committed if the block completes normally and rolled back if it throws an exception.
  */
 suspend fun <T> DataSource.withTransaction(borrow: suspend context(Connection) () -> T): T =
     connection.use { connection ->
         connection.autoCommit = false
         connection.beginRequest()
+        // Used to avoid masking exceptions.
         var success = false
         try {
             context(connection) { borrow() }.also {
@@ -33,10 +34,9 @@ suspend fun <T> DataSource.withTransaction(borrow: suspend context(Connection) (
             try {
                 connection.endRequest()
             } catch (e: Throwable) {
-                if (success) {
-                    throw e
-                }
                 // We don't want to mask the original exception.
+                if (success)
+                    throw e
                 e.printStackTrace()
             }
         }
@@ -110,3 +110,11 @@ suspend fun update(
     setParams(params)
     executeUpdate()
 }
+
+context(cx: Connection)
+fun String.quoteIdentifier(): String = cx.metaData.identifierQuoteString.let {
+    "$it$this$it"
+}
+
+context(cx: Connection)
+fun Iterable<String>.quoteIdentifiers(): String = joinToString(".") { it.quoteIdentifier() }

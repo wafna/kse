@@ -41,12 +41,12 @@ The *ResultIterator* derives from *ResultSet*, thus exposing its methods, as wel
 
 Parameters are provided to prepared statements as setter functions that operate on the prepared statement.
 This scheme obviates the need for reflective code, improving performance, and allows for easy extension.
-Extension methods are provided for common types and can be easily added for custom types.
+Extension methods are provided for JDBC types and can be easily added for custom types.
 
-Note in this example that we use the *nullableParam* function to explicitly set SQL NULL when the value is null.
+Note in this example that we use the *setNull* function to explicitly set SQL NULL when the value is null.
 
 ```kotlin
-fun String?.paramString(): Param = nullableParam { statement, parameterIndex, value ->
+fun String?.paramString(): Param = setNull { statement, parameterIndex, value ->
     statement.setString(parameterIndex, value)
 }
 ```
@@ -56,6 +56,19 @@ fun String?.paramString(): Param = nullableParam { statement, parameterIndex, va
 JDBC's *ResultSet* object is available directly to clients but, for convenience, the *ResultIterator* object is provided.
 The *ResultIterator* derives from *ResultSet*, thus exposing its methods, as well as providing 
 an iterator over the result rows and a cursor on each row, allowing the fields to be read in order.
+
+```kotlin
+select("SELECT id, name FROM users") {
+    readRecords {
+        val id = getInt()
+        val name = getString()
+        User(id, name)
+    }
+}
+```
+
+The *readRecords* function allows clients to simply supply a function to marshal the fields into a record.
+The fields may be read in selected order, as here, or using the *ResultSet* methods.
 
 For numerical results, i.e. inserts and updates, methods are provided to assert the number of rows affected.
 
@@ -67,7 +80,7 @@ where these records are read and written.
 
 ```kotlin
 val userEntity  = object: Entity<User>(
-    table = Table("USERS"),
+    table = Table(listOf("KSE"), "USERS"),
     fields = listOf("ID".field, "NAME".field)
 ) {
     override fun read(resultSet: ResultIterator): User =
@@ -79,7 +92,10 @@ val userEntity  = object: Entity<User>(
 }
 ```
 
-In the above example, the User object is mapped to two fields in the USERS table. 
+In the above example, the User object is mapped to two fields in the USERS table.
+Note the qualifying list of schema names in the table definition.
+This may be omitted if the table is in the default schema.
+
 The *read* method is used to map the result set to the User object, 
 and the *write* method is used to map the User object to the parameters for insert and update statements.
 

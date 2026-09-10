@@ -30,10 +30,10 @@ data class Table(val schemas: List<String>, val tableName: String) {
 
     constructor(tableName: String) : this(emptyList(), tableName)
 
-    val qname =
-        "${(if (schemas.isEmpty()) "" else "${schemas.joinToString(".") { "\"$it\"" }}.")}\"$tableName\""
+    context(_: Connection)
+    fun qname() = (schemas + tableName).quoteIdentifiers()
 
-    override fun toString(): String = qname
+    override fun toString(): String = throw NotImplementedError("Do not use.")
 }
 
 /**
@@ -63,9 +63,9 @@ abstract class Entity<R>(val table: Table, val fields: List<Field>) {
     abstract fun write(record: R): List<Param>
 
     /** Generates the head of a SELECT statement. */
-    fun selectHead(alias: String = ""): String {
-        return "SELECT ${projection(alias)}\nFROM ${table.qname}${if (alias.isEmpty()) "" else " \"$alias\""}"
-    }
+    context(_: Connection)
+    fun selectHead(alias: String = ""): String =
+        "SELECT ${projection(alias)}\nFROM ${table.qname()}${if (alias.isEmpty()) " " else " \"$alias\""}"
 
     /**
      * @param alias The alias applied to the table in the head.
@@ -93,41 +93,38 @@ abstract class Entity<R>(val table: Table, val fields: List<Field>) {
      * Every INSERT has the same form. This variable form is useful for tables with default fields
      * that are not inserted (e.g. deleted_at). This enforces that the fields exist.
      */
+    context(cx: Connection)
     private fun insertHead(fieldNames: Iterable<String>): String =
-        "INSERT INTO ${table.qname} (${fieldNames.joinToString(", ") { "\"$it\"" }})\nVALUES (${
-            fieldList(namesToFields(fieldNames))
-        })"
+        """INSERT INTO ${table.qname()} (${fieldNames.joinToString(", ") { it.quoteIdentifier() }})
+            VALUES (${fieldList(namesToFields(fieldNames))})""".trimIndent()
 
     context(cx: Connection)
     suspend fun insert(
         records: Iterable<R>,
-    ): IntArray =
-        insert(
-            sql = insertHead(fields.map { it.name }),
-            records = records.transformer { write(it) },
-        )
+    ): IntArray = insert(
+        sql = insertHead(fields.map { it.name }),
+        records = records.transformer { write(it) },
+    )
 
     context(cx: Connection)
     suspend fun update(
         fieldNames: Iterable<String>,
         where: String,
         vararg params: Param,
-    ): Int =
-        update(
-            "UPDATE ${table.qname}\nSET ${fieldListNamed(namesToFields(fieldNames))}\nWHERE $where",
-            *params,
-        )
+    ): Int = update(
+        sql = "UPDATE ${table.qname()}\nSET ${fieldListNamed(namesToFields(fieldNames))}\nWHERE $where",
+        params = params,
+    )
 
     context(cx: Connection)
     suspend fun update(
         fieldNames: Iterable<String>,
         where: String,
         params: Collection<Param>,
-    ): Int =
-        update(
-            "UPDATE ${table.qname}\nSET ${fieldListNamed(namesToFields(fieldNames))}\nWHERE $where",
-            params,
-        )
+    ): Int = update(
+        "UPDATE ${table.qname()}\nSET ${fieldListNamed(namesToFields(fieldNames))}\nWHERE $where",
+        params,
+    )
 
     fun namesToFields(names: Iterable<String>): List<Field> =
         names.map { fieldMap[it] ?: error("Unknown field name $it") }
@@ -148,5 +145,15 @@ abstract class Entity<R>(val table: Table, val fields: List<Field>) {
                     else -> "\"${it.name}\" = ? :: $sqlType"
                 }
             }
+    }
+}
+
+/** This is used to produce param lists from source records on demand. */
+private inline fun <P, Q> Iterable<P>.transformer(crossinline f: (P) -> Q): Iterator<Q> {
+    val it = iterator()
+    return object : Iterator<Q> {
+        override fun next(): Q = f(it.next())
+
+        override fun hasNext(): Boolean = it.hasNext()
     }
 }

@@ -5,42 +5,51 @@ import com.zaxxer.hikari.HikariDataSource
 import javax.sql.DataSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlin.time.Instant
-import kotlin.time.toKotlinInstant
 import kotlinx.coroutines.runBlocking
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.Month
 
 fun runTestDB(f: suspend (DataSource) -> Unit) {
-    val db = HikariDataSource(HikariConfig().also {
-        it.jdbcUrl = "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1"
-        it.username = "sa"
-        it.password = ""
-        it.maximumPoolSize = 1
+    val db = HikariDataSource(HikariConfig().apply {
+        jdbcUrl = "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1"
+        username = "sa"
+        password = ""
+        maximumPoolSize = 1
     })
-
-    runBlocking { f(db) }
+    runBlocking {
+        db.withTransaction {
+            update("CREATE SCHEMA IF NOT EXISTS kse")
+        }
+        f(db)
+    }
 }
 
 class TestDatabase {
     @Test
+    fun testQuoteIdentifier() {
+        runTestDB { db ->
+            db.withTransaction {
+            assertEquals(
+                """"a"."b"."c"""",
+                listOf("a", "b", "c").quoteIdentifiers())
+            }
+    }
+    }
+    @Test
     fun test() {
         runTestDB { db ->
             db.withTransaction {
-                update("CREATE TABLE IF NOT EXISTS users (id INT PRIMARY KEY, name VARCHAR(255))")
+                update("CREATE TABLE kse.users (id INT PRIMARY KEY, name VARCHAR(255))")
                 val alice = User(1, "Alice")
                 val bob = User(2, "Bob")
                 val users = listOf(alice, bob)
                 insert(
-                    "INSERT INTO users (id, name) VALUES (?, ?)",
+                    "INSERT INTO kse.users (id, name) VALUES (?, ?)",
                     // List and parameterize.
                     users.map {
                         listOf(it.id.setInt(), it.name.setString())
                     }.iterator()
                 ).requireInserts(users.size)
-                select("SELECT id, name FROM users") {
+                select("SELECT id, name FROM kse.users") {
                     readRecords {
                         val id = getInt()
                         val name = getString()
@@ -53,9 +62,9 @@ class TestDatabase {
                     }
                 }
                 val newName = "Carol"
-                update("UPDATE users SET name = ? WHERE id = ?", newName.setString(), users[0].id.setInt())
+                update("UPDATE kse.users SET name = ? WHERE id = ?", newName.setString(), users[0].id.setInt())
                     .requireUpdates(1)
-                select("SELECT id, name FROM users") {
+                select("SELECT id, name FROM kse.users") {
                     readRecords {
                         val id = getInt()
                         val name = getString()
