@@ -32,8 +32,10 @@ dependencies {
     testImplementation("com.zaxxer:HikariCP:7.1.0")
     testImplementation("com.h2database:h2:2.5.250")
     testImplementation("org.postgresql:postgresql:42.7.13")
+    testImplementation("org.mariadb.jdbc:mariadb-java-client:3.5.2")
     testImplementation("io.kotest.extensions:kotest-extensions-testcontainers:2.0.2")
     testImplementation("org.testcontainers:postgresql:1.21.4")
+    testImplementation("org.testcontainers:mariadb:1.21.4")
 }
 
 testing {
