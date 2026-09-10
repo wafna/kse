@@ -1,13 +1,12 @@
-package wafna.kse.pgsql
+package wafna.kse.h2
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import wafna.kse.common.testDataSource
-import wafna.kse.h2.withH2DB
 import wafna.kse.quoteIdentifiers
 import wafna.kse.withTransaction
 
-class TestDatabase {
+class TestDatabaseH2 {
     @Test
     fun testQuoteIdentifier() {
         withH2DB { db ->
@@ -21,6 +20,6 @@ class TestDatabase {
     }
     @Test
     fun testDatabase() {
-        withPGDB { testDataSource(it) }
+        withH2DB { testDataSource(it) }
     }
 }

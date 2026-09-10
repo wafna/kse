@@ -1,4 +1,4 @@
-package wafna.kse.h2
+package wafna.kse.pgsql
 
 import java.math.BigDecimal
 import java.sql.Date
@@ -15,7 +15,6 @@ import wafna.kse.readRecords
 import wafna.kse.requireUpdates
 import wafna.kse.select
 import wafna.kse.setArray
-import wafna.kse.setAsciiStream
 import wafna.kse.setBigDecimal
 import wafna.kse.setBinaryStream
 import wafna.kse.setBoolean
@@ -36,10 +35,10 @@ import wafna.kse.setTimestamp
 import wafna.kse.update
 import wafna.kse.withTransaction
 
-class TestJDBCTypes {
+class TestJDBCTypesPG {
     @Test
     fun testAllNonNull() {
-        withH2DB { db ->
+        withPGDB { db ->
             db.withTransaction {
                 update(
                     """
@@ -47,20 +46,19 @@ class TestJDBCTypes {
                         id INT PRIMARY KEY,
                         c_string VARCHAR(255),
                         c_boolean BOOLEAN,
-                        c_byte TINYINT,
+                        c_byte SMALLINT,
                         c_short SMALLINT,
                         c_int INT,
                         c_long BIGINT,
                         c_float REAL,
                         c_double DOUBLE PRECISION,
                         c_bigdecimal DECIMAL(10, 2),
-                        c_bytes VARBINARY(255),
+                        c_bytes BYTEA,
                         c_date DATE,
                         c_time TIME,
                         c_timestamp TIMESTAMP,
-                        c_ascii CLOB,
-                        c_char CLOB,
-                        c_binary BLOB,
+                        c_char TEXT,
+                        c_binary BYTEA,
                         c_object VARCHAR(255),
                         c_array INT ARRAY,
                         c_localdate DATE
@@ -80,10 +78,10 @@ class TestJDBCTypes {
                     """
                     INSERT INTO test_getters_all (
                         id, c_string, c_boolean, c_byte, c_short, c_int, c_long, c_float, c_double,
-                        c_bigdecimal, c_bytes, c_date, c_time, c_timestamp, c_ascii, c_char,
+                        c_bigdecimal, c_bytes, c_date, c_time, c_timestamp, c_char,
                         c_binary, c_object, c_array, c_localdate
                     ) VALUES (
-                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                     )
                     """.trimIndent(),
                     1.setInt(),
@@ -100,7 +98,6 @@ class TestJDBCTypes {
                     expectedDate.setDate(),
                     expectedTime.setTime(),
                     expectedTimestamp.setTimestamp(),
-                    "ascii_text".byteInputStream().setAsciiStream(),
                     "char_text".reader().setCharacterStream(),
                     expectedBytes.inputStream().setBinaryStream(),
                     "custom_object".setObject(),
@@ -108,7 +105,7 @@ class TestJDBCTypes {
                     expectedLocalDate.setLocalDate()
                 ).requireUpdates(1)
 
-                select("SELECT c_string, c_boolean, c_byte, c_short, c_int, c_long, c_float, c_double, c_bigdecimal, c_bytes, c_date, c_time, c_timestamp, c_ascii, c_char, c_binary, c_object, c_array, c_localdate FROM test_getters_all WHERE id = 1") {
+                select("SELECT c_string, c_boolean, c_byte, c_short, c_int, c_long, c_float, c_double, c_bigdecimal, c_bytes, c_date, c_time, c_timestamp, c_char, c_binary, c_object, c_array, c_localdate FROM test_getters_all WHERE id = 1") {
                     readRecords {
                         assertEquals("sample_string", getString())
                         assertEquals(true, getBoolean())
@@ -123,7 +120,6 @@ class TestJDBCTypes {
                         assertEquals(expectedDate, getDate())
                         assertEquals(expectedTime, getTime())
                         assertEquals(expectedTimestamp, getTimestamp())
-                        assertEquals("ascii_text", getAsciiStream()?.bufferedReader()?.readText())
                         assertEquals("char_text", getCharacterStream()?.readText())
                         assertContentEquals(expectedBytes, getBinaryStream()?.readAllBytes())
                         assertEquals("custom_object", getObject())
@@ -140,7 +136,7 @@ class TestJDBCTypes {
 
     @Test
     fun testAllNull() {
-        withH2DB { db ->
+        withPGDB { db ->
             db.withTransaction {
                 update(
                     """
@@ -148,20 +144,20 @@ class TestJDBCTypes {
                         id INT PRIMARY KEY,
                         c_string VARCHAR(255),
                         c_boolean BOOLEAN,
-                        c_byte TINYINT,
+                        c_byte SMALLINT,
                         c_short SMALLINT,
                         c_int INT,
                         c_long BIGINT,
                         c_float REAL,
                         c_double DOUBLE PRECISION,
                         c_bigdecimal DECIMAL(10, 2),
-                        c_bytes VARBINARY(255),
+                        c_bytes BYTEA,
                         c_date DATE,
                         c_time TIME,
                         c_timestamp TIMESTAMP,
-                        c_ascii CLOB,
-                        c_char CLOB,
-                        c_binary BLOB,
+                        c_ascii TEXT,
+                        c_char TEXT,
+                        c_binary BYTEA,
                         c_object VARCHAR(255),
                         c_array INT ARRAY,
                         c_localdate DATE
@@ -214,7 +210,7 @@ class TestJDBCTypes {
 
     @Test
     fun testOrNull() {
-        withH2DB { db ->
+        withPGDB { db ->
             db.withTransaction {
                 update("CREATE TABLE IF NOT EXISTS test_ornull (id INT PRIMARY KEY, val INT)")
                 update("INSERT INTO test_ornull VALUES (1, NULL)")
