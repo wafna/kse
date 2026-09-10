@@ -114,15 +114,6 @@ fun InputStream?.setBinaryStream(): Param = setNullable { statement, parameterIn
     statement.setBinaryStream(parameterIndex, value)
 }
 
-//fun Instant?.setInstant(): Param = setNullable { statement, parameterIndex, value ->
-//    val dateTime =
-//        LocalDateTime.ofInstant(
-//            value.toJavaInstant(),
-//            ZoneId.of(Calendar.getInstance().timeZone.id),
-//        )
-//    statement.setTimestamp(parameterIndex, Timestamp.valueOf(dateTime))
-//}
-
 fun LocalDate?.setLocalDate(): Param = setNullable { statement, parameterIndex, value ->
     statement.setDate(parameterIndex, Date.valueOf(value.toJavaLocalDate()))
 }
