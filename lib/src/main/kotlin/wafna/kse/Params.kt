@@ -32,11 +32,16 @@ object NullParam : Param() {
     override fun inspect(): String = "NULL"
 }
 
+/**
+ * Carries a non null value parameter.
+ */
 abstract class ValueParam<T>(val value: T) : Param() {
     override fun inspect(): String = value.toString()
 }
 
-/** Sets NULL for null parameters. */
+/**
+ * Sets NULL for null parameters.
+ */
 fun <T> T?.setNullable(setter: (PreparedStatement, Int, T) -> Unit): Param =
     if (null == this) NullParam
     else object : ValueParam<T & Any>(this) {
