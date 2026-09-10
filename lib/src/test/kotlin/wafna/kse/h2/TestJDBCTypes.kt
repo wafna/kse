@@ -1,4 +1,4 @@
-package wafna.kse
+package wafna.kse.h2
 
 import java.math.BigDecimal
 import java.sql.Date
@@ -10,6 +10,31 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
+import wafna.kse.orNull
+import wafna.kse.readRecords
+import wafna.kse.requireUpdates
+import wafna.kse.select
+import wafna.kse.setArray
+import wafna.kse.setAsciiStream
+import wafna.kse.setBigDecimal
+import wafna.kse.setBinaryStream
+import wafna.kse.setBoolean
+import wafna.kse.setByte
+import wafna.kse.setBytes
+import wafna.kse.setCharacterStream
+import wafna.kse.setDate
+import wafna.kse.setDouble
+import wafna.kse.setFloat
+import wafna.kse.setInt
+import wafna.kse.setLocalDate
+import wafna.kse.setLong
+import wafna.kse.setObject
+import wafna.kse.setShort
+import wafna.kse.setString
+import wafna.kse.setTime
+import wafna.kse.setTimestamp
+import wafna.kse.update
+import wafna.kse.withTransaction
 
 class TestJDBCTypes {
     @Test
@@ -102,7 +127,7 @@ class TestJDBCTypes {
                         assertEquals("char_text", getCharacterStream()?.readText())
                         assertContentEquals(expectedBytes, getBinaryStream()?.readAllBytes())
                         assertEquals("custom_object", getObject())
-                        val arrayResult = (getArray()?.array as? kotlin.Array<*>)?.toList()
+                        val arrayResult = (getArray()?.array as? Array<*>)?.toList()
                         assertEquals(expectedArray, arrayResult)
                         assertEquals(expectedLocalDate, getLocalDate())
                     }

@@ -96,7 +96,7 @@ abstract class Entity<R>(val table: Table, val fields: List<Field>) {
     context(cx: Connection)
     private fun insertHead(fieldNames: Iterable<String>): String =
         """INSERT INTO ${table.qname()} (${fieldNames.joinToString(", ") { it.quoteIdentifier() }})
-            VALUES (${fieldList(namesToFields(fieldNames))})""".trimIndent()
+            VALUES (${parameterList(namesToFields(fieldNames))})""".trimIndent()
 
     context(cx: Connection)
     suspend fun insert(
@@ -112,7 +112,7 @@ abstract class Entity<R>(val table: Table, val fields: List<Field>) {
         where: String,
         vararg params: Param,
     ): Int = update(
-        sql = "UPDATE ${table.qname()}\nSET ${fieldListNamed(namesToFields(fieldNames))}\nWHERE $where",
+        sql = "UPDATE ${table.qname()}\nSET ${fieldList(namesToFields(fieldNames))}\nWHERE $where",
         params = params,
     )
 
@@ -122,7 +122,7 @@ abstract class Entity<R>(val table: Table, val fields: List<Field>) {
         where: String,
         params: Collection<Param>,
     ): Int = update(
-        "UPDATE ${table.qname()}\nSET ${fieldListNamed(namesToFields(fieldNames))}\nWHERE $where",
+        "UPDATE ${table.qname()}\nSET ${fieldList(namesToFields(fieldNames))}\nWHERE $where",
         params,
     )
 
@@ -130,7 +130,7 @@ abstract class Entity<R>(val table: Table, val fields: List<Field>) {
         names.map { fieldMap[it] ?: error("Unknown field \"$it\"") }
 
     companion object {
-        fun fieldList(fields: Iterable<Field>): String =
+        private fun parameterList(fields: Iterable<Field>): String =
             fields.joinToString(", ") {
                 when (val sqlType = it.sqlType) {
                     null -> "?"
@@ -138,7 +138,7 @@ abstract class Entity<R>(val table: Table, val fields: List<Field>) {
                 }
             }
 
-        fun fieldListNamed(fields: Iterable<Field>): String =
+        private fun fieldList(fields: Iterable<Field>): String =
             fields.joinToString(", ") {
                 when (val sqlType = it.sqlType) {
                     null -> "\"${it.name}\" = ?"

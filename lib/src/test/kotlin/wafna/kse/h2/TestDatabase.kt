@@ -1,4 +1,4 @@
-package wafna.kse
+package wafna.kse.h2
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
@@ -7,6 +7,16 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
+import wafna.kse.insert
+import wafna.kse.quoteIdentifiers
+import wafna.kse.readRecords
+import wafna.kse.requireInserts
+import wafna.kse.requireUpdates
+import wafna.kse.select
+import wafna.kse.setInt
+import wafna.kse.setString
+import wafna.kse.update
+import wafna.kse.withTransaction
 
 fun runTestDB(f: suspend (DataSource) -> Unit) {
     val db = HikariDataSource(HikariConfig().apply {

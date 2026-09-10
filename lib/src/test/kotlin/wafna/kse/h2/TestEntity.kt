@@ -1,10 +1,23 @@
-package wafna.kse
+package wafna.kse.h2
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import org.junit.jupiter.api.assertThrows
+import wafna.kse.Entity
+import wafna.kse.Param
+import wafna.kse.ResultIterator
+import wafna.kse.Table
+import wafna.kse.field
+import wafna.kse.optional
+import wafna.kse.requireInserts
+import wafna.kse.requireUpdates
+import wafna.kse.setInt
+import wafna.kse.setString
+import wafna.kse.unique
+import wafna.kse.update
+import wafna.kse.withTransaction
 import java.sql.Connection
 
 data class User(val id: Int, val name: String)
