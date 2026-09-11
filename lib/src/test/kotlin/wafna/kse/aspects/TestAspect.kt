@@ -72,8 +72,3 @@ class TestAspect {
         }
     }
 }
-
-context(cx: Connection)
-fun Collection<Int>?.setIds(): Param = setNullable { statement, position, value ->
-    statement.setArray(position, cx.createArrayOf("TEXT", value.toTypedArray()))
-}
