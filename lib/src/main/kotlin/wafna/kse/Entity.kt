@@ -139,6 +139,18 @@ abstract class Entity<R, W>(val table: Table, val fields: List<Field>) {
         params = params,
     )
 
+    context(_: Connection, _: Listener)
+    suspend fun delete(where: String, params: Collection<Param>): Int = update(
+        sql = "DELETE FROM ${table.qname()}\nWHERE $where",
+        params = params
+    )
+
+    context(_: Connection, _: Listener)
+    suspend fun delete(where: String, vararg params: Param): Int = update(
+        sql = "DELETE FROM ${table.qname()}\nWHERE $where",
+        params = params
+    )
+
     private val fieldMap = fields.associateBy { it.name }
 
     private fun namesToFields(names: Iterable<String>): List<Field> =

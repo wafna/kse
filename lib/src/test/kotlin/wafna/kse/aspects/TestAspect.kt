@@ -5,6 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import wafna.kse.Param
 import wafna.kse.pgsql.withPGDB
+import wafna.kse.requireUpdates
 import wafna.kse.setInt
 import wafna.kse.setNullable
 import wafna.kse.update
@@ -61,6 +62,9 @@ class TestAspect {
                     assertTrue(docs.all { it.ownerId == user.id })
                     assertTrue(docs.all { it.name.startsWith(user.name) })
                 }
+                DocumentEntity.delete("owner_id = ?", 1.setInt()).requireUpdates(docsPerUser)
+                UserEntity.delete("id = ?", 1.setInt()).requireUpdates(1)
+                assertTrue(UserDao.selectByIds(listOf(1)).isEmpty())
             }
         }
     }
