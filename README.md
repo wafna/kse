@@ -42,11 +42,11 @@ Alternatively, one can consume the JDBC native *ResultSet* directly in the *sele
 
 ## Params
 
-Parameters are provided to prepared statements as setter functions that operate on the prepared statement.
+Parameters are provided to prepared statements as objects with that operate on the prepared statement.
 This scheme obviates the need for reflective code and minimizes the scope of JDBC parameter objects, improving performance.
 Extension methods are provided for JDBC types and can be easily added for custom types.
 
-Note in this example of a custom parameter that we use the *setNull* function 
+Note in this example of a *Param* implementation that we use the *setNull* function 
 to explicitly set SQL NULL when the value is null.
 Omitting this can lead to dire consequences.
 
@@ -82,14 +82,15 @@ For numerical results, such as inserts and updates, methods are provided to asse
 ## Entities
 
 Entities provide a mapping between fields in a single table and data classes.
-Each entity is parameterized on two types; one for writing and one for reading.
-This handles the situation where a record contains values generated within the database,
-such as ids.
-In this case, one can provide a sibling object without the fields or create default values
-in the domain object that are ignored when the record is inserted.
-
 By providing a projection and methods for reading and writing a data class, entities simplify the call sites
 where these records are read and written.
+
+Each entity is parameterized on two types; one for writing and one for reading.
+This handles the situation where a record contains values generated within the database,
+such as ids and creation timestamps.
+In this case, one can provide a sibling object without the fields or create default values
+in the domain object that are ignored when the record is inserted.
+In either case, the fields not to be inserted when the row is created must be marked with *auto*.
 
 The *Entity* database methods partially or completely generate some of the SQL.
 In the case of *select*, the *Entity* generates the SQL fragment for the projection from the table.
@@ -114,7 +115,8 @@ In the above example, the User object is mapped to two fields in the USERS table
 Note the qualifying list of schema names in the table definition.
 This may be omitted if the table is in the default schema.
 
-The *auto* tag on the ID field indicates that the field is auto-generated and thus to be ignored when writing the record.
+The *auto* tag on the ID field indicates that the field is auto-generated 
+and thus to be ignored when inserting the record.
 Hence, the *write* method omits it from its parameter list, as well.
 Note that all parameters must always be supplied in the same order as the fields in the Entity.
 
