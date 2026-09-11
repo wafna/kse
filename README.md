@@ -174,6 +174,11 @@ Note the use of the *inspect* method on the parameters in *showParams*.
 This allows access to the parameter's value and is intended for logging and debugging.
 The default uses the value's *toString* method and can be overridden with a custom *Param* type.
 
+## Exception Handling
+
+No provision is made for handling exceptions other than in the *withTransaction* function.
+The reason for this is that all this code is expected to operate in the context of a transaction.
+
 ## Aspects
 
 This is a design pattern supported by this library that allows for defining cross-cutting operations on entities that 

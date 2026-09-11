@@ -67,7 +67,3 @@ Using delegated inheritance, all the methods of *Selectable*, implemented on *Us
 
 Multiple instances of these aspects can be mixed in.
 A more complete example is worked out in the test code.
-
-```kotlin
-
-```

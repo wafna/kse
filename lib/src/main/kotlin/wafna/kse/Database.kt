@@ -14,7 +14,7 @@ class DBException(msg: String, cause: Throwable) : RuntimeException(msg, cause)
 suspend fun <T> DataSource.withTransaction(
     listener: Listener = ListenerNOOP,
     borrow: suspend context(Connection, Listener) () -> T
-): T =
+): Result<T> = Result.runCatching {
     connection.use { connection ->
         connection.autoCommit = false
         connection.beginRequest()
@@ -44,6 +44,7 @@ suspend fun <T> DataSource.withTransaction(
             }
         }
     }
+}
 
 /**
  * Interpolates the params into the prepared statement in order.
