@@ -1,7 +1,6 @@
 package wafna.kse
 
 import javax.sql.DataSource
-import org.slf4j.Logger
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet

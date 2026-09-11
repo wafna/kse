@@ -35,17 +35,14 @@ class TestEntity {
 
 internal fun testEntity(schema: String?) {
     val tableName = "TEST_ENTITY"
-    val userEntity = object : Entity<User>(
+    val userEntity = object : Entity<User, User>(
         // Uses both constructors.
         table = if (null == schema) Table(tableName) else Table(listOf(schema), tableName),
         fields = listOf("ID".field, "NAME".field)
     ) {
-        override fun read(resultSet: ResultIterator): User =
-            User(resultSet.getInt()!!, resultSet.getString()!!)
-
+        override fun read(): ResultIterator.() -> User = { User(getInt()!!, getString()!!) }
         context(cx: Connection)
-        override fun write(record: User): List<Param> =
-            listOf(record.id.setInt(), record.name.setString())
+        override fun write(): User.() -> List<Param> = { listOf(id.setInt(), name.setString()) }
     }
     withH2DB { db ->
         db.withTransaction {

@@ -32,7 +32,7 @@ object ListenerNOOP : Listener {
  * Provides methods that check the log level before calculating the message.
  */
 @Suppress("unused") // verified by inspection
-abstract class LoggingListener(val log: Logger) : Listener {
+open class LoggingListener(val log: Logger) : Listener by ListenerNOOP {
     fun trace(s: () -> String) {
         if (log.isTraceEnabled) log.trace(s())
     }
