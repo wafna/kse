@@ -31,18 +31,17 @@ dataSource.withTransaction {
 Note how parameters are bundled.
 Extension functions are provided for the data types native to JDBC.
 These functions create *Param* objects that, when given a *PreparedStatement* and a position, set the value accordingly.
-In this manner, the library needs no special knowledge of supported data types on any database and can easily be 
-"taught" new strategies.
+In this manner, the library needs no special knowledge of data types and can easily be adapted to custom types. 
 
-The *select* method takes, as its last parameter, a function that consumes a record set.
+The *select* method takes, as its last parameter, a function that consumes a *ResultSet*.
 In this example, we call *readRecords*, which iterates our reader function over the *ResultSet*.
 Additionally, it provides a cursor on the row allowing the results to be read in selection order.
 The *ResultIterator* derives from *ResultSet*, thus exposing its methods, as well.
 Alternatively, one can consume the JDBC native *ResultSet* directly in the *select*.
 
-## Params
+## Parameters
 
-Parameters are provided to prepared statements as objects with that operate on the prepared statement.
+Parameters are provided to prepared statements as objects that operate on the prepared statement.
 This scheme obviates the need for reflective code and minimizes the scope of JDBC parameter objects, improving performance.
 Extension methods are provided for JDBC types and can be easily added for custom types.
 
@@ -50,12 +49,13 @@ Note in this example of a *Param* implementation that we use the *setNull* funct
 to explicitly set SQL NULL when the value is null.
 Omitting this can lead to dire consequences.
 
+Also, remember that the *Connection* is available in context.
+
 ```kotlin
 context(cx: Connection)
-fun Collection<String>?.setStrings(): Param =
-    setNull { statement, position, value ->
-        statement.setArray(position, cx.createArrayOf("TEXT", value.toTypedArray()))
-    }
+inline fun <reified K> Collection<K>.setArray(type: String): Param = setNullable { statement, position, value ->
+    statement.setArray(position, cx.createArrayOf(type, value.toTypedArray<K>()))
+}
 ```
 
 ## Results
