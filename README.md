@@ -7,7 +7,7 @@ It is database agnostic and promotes reuse of SQL fragments while giving direct 
 The library has facilities for marshaling between data projections and objects.
 
 Database agnosticism is achieved by only consuming raw SQL and maintaining no direct knowledge of data types.
-Input data are captured in *Para* objects that know how to set their data into prepared statements once given the handle and position.
+Input data are captured in *Param* objects that know how to set their data into prepared statements once given the handle and position.
 Output data are read from result sets using JDBC functions directly.
 For this last task, there are facilities to conveniently reuse marshaling logic from *ResultSet* to records.
 
