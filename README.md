@@ -98,20 +98,26 @@ In the case of *insert*, the *Entity* generates the entirety of the SQL.
 For *update*, the *Entity* generates the SQL fragment for the partial projection into the table and a WHERE.
 
 ```kotlin
-val userEntity  = object: Entity<User>(
-    table = Table(listOf("KSE"), "USERS"),
-    fields = listOf("ID".field.auto, "NAME".field)
+internal data class UserWip(val name: String)
+
+internal data class User(val id: Int, val name: String)
+
+internal object UserEntity : Entity<User, UserWip>(
+    Table("users"),
+    listOf("id".field.auto, "name".field)
 ) {
-    override fun read(resultSet: ResultIterator): User =
-        User(resultSet.getInt()!!, resultSet.getString()!!)
+    override fun read(): ResultIterator.() -> User = {
+        User(id = getInt()!!, name = getString()!!)
+    }
 
     context(cx: Connection)
-    override fun write(record: User): List<Param> =
-        listOf(record.name.paramString())
+    override fun write(): UserWip.() -> List<Param> = {
+        listOf(name.setString())
+    }
 }
 ```
 
-In the above example, the User object is mapped to two fields in the USERS table.
+In the above example, the User object is mapped to two fields in the *users* table.
 Note the qualifying list of schema names in the table definition.
 This may be omitted if the table is in the default schema.
 
@@ -123,8 +129,14 @@ Note that all parameters must always be supplied in the same order as the fields
 The *read* method is used to map the result set to the User object, 
 and the *write* method is used to map the User object to the parameters for insert and update statements.
 
+In this case, we use two different objects; one for the nascent records
+to be inserted into the database and one for the completed records to be selected from the database.
+The User object could have been used for both.
+The marking of the id field as *auto* and the implementation of the *write* method would not change
+(other than its type signature).
+
 ```kotlin
-val users = listOf(User(1, "Alice"), User(2, "Bob"))
+val users = listOf(UserWip("Alice"), UserWip("Bob"))
 
 userEntity.insert(users).requireInserts(2)
 userEntity.update()
@@ -133,7 +145,7 @@ val selectedUsers = userEntity.select("U", "WHERE U.ID = ?", 1.paramInt())
 ```
 
 The example, above, demonstrates the convenience of using an Entity.
-Note that the select function requires an alias for the table and an optional tail for the generated SQL.
+Later we'll learn how to apply that select by id logic to any table (entity) using aspects.
 
 ## Listeners
 
