@@ -65,13 +65,15 @@ class TestAspect {
                 DocumentEntity.delete("owner_id = ?", 1.setInt()).requireUpdates(docsPerUser)
                 UserEntity.delete("id = ?", 1.setInt()).requireUpdates(1)
                 assertTrue(UserDao.selectByIds(listOf(1)).isEmpty())
+                UserDao.searchByName("%").let {
+                    assertEquals(users.size - 1, it.size)
+                }
             }
         }
     }
 }
 
 context(cx: Connection)
-fun Collection<Int>?.setIds(): Param =
-    setNullable { statement, position, value ->
-        statement.setArray(position, cx.createArrayOf("TEXT", value.toTypedArray()))
-    }
+fun Collection<Int>?.setIds(): Param = setNullable { statement, position, value ->
+    statement.setArray(position, cx.createArrayOf("TEXT", value.toTypedArray()))
+}
