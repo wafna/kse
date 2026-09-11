@@ -66,4 +66,4 @@ class UserDao : Selectable<User> by selectableById(Entity<User>) {
 Using delegated inheritance, all the methods of *Selectable*, implemented on *Users*, are now available in *UserDao*.
 
 Multiple instances of these aspects can be mixed in.
-A more complete example is worked out in the test code.
+A more complete example is worked out in the [test code](../lib/src/test/kotlin/wafna/kse/aspects/TestAspect.kt).
