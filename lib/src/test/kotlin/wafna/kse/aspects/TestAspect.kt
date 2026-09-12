@@ -40,6 +40,7 @@ class TestAspect {
                     )""".trimIndent()
                 )
                 val usernames = listOf("Bob", "Carol", "Ted", "Alice")
+                // Create users.
                 UserDao.insert(usernames.map { UserWip(it) })
                 val users = UserDao.searchByName("%")
                 assertEquals(usernames.size, users.size)
@@ -62,9 +63,11 @@ class TestAspect {
                     assertTrue(docs.all { it.ownerId == user.id })
                     assertTrue(docs.all { it.name.startsWith(user.name) })
                 }
-                DocumentEntity.delete("owner_id = ?", 1.setInt()).requireUpdates(docsPerUser)
-                UserEntity.delete("id = ?", 1.setInt()).requireUpdates(1)
-                assertTrue(UserDao.selectByIds(listOf(1)).isEmpty())
+                // Delete a user and associated documents.
+                val deadGuy = 1
+                DocumentEntity.delete("owner_id = ?", deadGuy.setInt()).requireUpdates(docsPerUser)
+                UserEntity.delete("id = ?", deadGuy.setInt()).requireUpdates(1)
+                assertTrue(UserDao.selectByIds(listOf(deadGuy)).isEmpty())
                 UserDao.searchByName("%").let {
                     assertEquals(users.size - 1, it.size)
                 }
