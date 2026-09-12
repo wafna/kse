@@ -92,10 +92,9 @@ In this case, one can provide a sibling object without the fields or create defa
 in the domain object that are ignored when the record is inserted.
 In either case, the fields not to be inserted when the row is created must be marked with *auto*.
 
-The *Entity* database methods partially or completely generate some of the SQL.
-In the case of *select*, the *Entity* generates the SQL fragment for the projection from the table.
-In the case of *insert*, the *Entity* generates the entirety of the SQL.
-For *update*, the *Entity* generates the SQL fragment for the partial projection into the table and a WHERE.
+Defining an entity requires implementing a method to read an R-type and write a W-type.
+The return types of these functions may seem unusual but clearly simplify the implementations,
+as can be seen in the example, below. 
 
 ```kotlin
 internal data class UserWip(val name: String)
@@ -103,7 +102,7 @@ internal data class UserWip(val name: String)
 internal data class User(val id: Int, val name: String)
 
 internal object UserEntity : Entity<User, UserWip>(
-    Table("users"),
+    Table(listOf("foo"), "users"),
     listOf("id".field.auto, "name".field)
 ) {
     override fun read(): ResultIterator.() -> User = {
@@ -121,8 +120,8 @@ In the above example, the User object is mapped to two fields in the *users* tab
 Note the qualifying list of schema names in the table definition.
 This may be omitted if the table is in the default schema.
 
-The *auto* tag on the ID field indicates that the field is auto-generated 
-and thus to be ignored when inserting the record.
+The *auto* tag on the *id* field indicates that the field is auto-generated and 
+thus to be ignored when inserting the record.
 Hence, the *write* method omits it from its parameter list, as well.
 Note that all parameters must always be supplied in the same order as the fields in the Entity.
 
@@ -134,6 +133,12 @@ to be inserted into the database and one for the completed records to be selecte
 The User object could have been used for both.
 The marking of the id field as *auto* and the implementation of the *write* method would not change
 (other than its type signature).
+
+The *Entity* database methods partially or completely generate some of the required SQL.
+- ***select***  Generates the SQL fragment for the projection from the table and a FROM clause.
+- ***insert***  Generates the entirety of the SQL.
+- ***update***  Generates the SQL fragment for the partial projection into the table and a WHERE.
+- ***delete***  Generates the just table name and a WHERE.
 
 ```kotlin
 val users = listOf(UserWip("Alice"), UserWip("Bob"))
@@ -178,6 +183,9 @@ The default uses the value's *toString* method and can be overridden with a cust
 
 No provision is made for handling exceptions other than in the *withTransaction* function.
 The reason for this is that all this code is expected to operate in the context of a transaction.
+If an exception happens, it's time to dispose of the transaction.
+Also, we don't want exceptions swallowed in an unchecked *Result*.
+
 
 ## Aspects
 
