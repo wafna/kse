@@ -1,7 +1,5 @@
 package wafna.kse
 
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.toJavaLocalDate
 import java.io.InputStream
 import java.io.Reader
 import java.math.BigDecimal
@@ -54,12 +52,6 @@ fun <T> T?.setNullable(setter: (PreparedStatement, Int, T) -> Unit): Param =
             setter(statement, parameterIndex, this@setNullable)
         }
     }
-
-/**
- * For custom ValueParam implementations.
- */
-fun <T> T?.setNullable(valueParam: ValueParam<T>): Param =
-    if (null == this) NullParam else valueParam
 
 fun String?.setString(): Param = setNullable { statement, parameterIndex, value ->
     statement.setString(parameterIndex, value)
@@ -123,10 +115,6 @@ fun Reader?.setCharacterStream(): Param = setNullable { statement, parameterInde
 
 fun InputStream?.setBinaryStream(): Param = setNullable { statement, parameterIndex, value ->
     statement.setBinaryStream(parameterIndex, value)
-}
-
-fun LocalDate?.setLocalDate(): Param = setNullable { statement, parameterIndex, value ->
-    statement.setDate(parameterIndex, Date.valueOf(value.toJavaLocalDate()))
 }
 
 fun Any?.setObject(): Param = setNullable { statement, parameterIndex, value ->
