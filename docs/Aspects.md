@@ -17,7 +17,7 @@ Above, we're specifying an action that selects records en masse from a list of i
 We'll implement this, directly.
 
 ```kotlin
-private class SelectableImpl(val entity: Entity<T>) : SelectableByExternalId<E> {
+class SelectableImpl(val entity: Entity<T>) : SelectableByExternalId<E> {
     context(_: Connection)
     override suspend fun selectByIds(ids: Collection<Int>): List<T> =
         if (ids.isEmpty()) {
@@ -26,39 +26,18 @@ private class SelectableImpl(val entity: Entity<T>) : SelectableByExternalId<E> 
             entity.select(
                 "",
                 "WHERE id = ANY(?::INT[])",
-                ids.paramStrings(), // Defined, above.
+                ids.paramArray("INT")
             )
         }
 }
 
-fun <T> selectableById(entity: Entity<T>): Selectable<E> = SelectableImpl(entity)
 ```
 
 We rely on the *Entity* to supply the projection and read the fields.
 Here, we only require the presence of an integer *id* field.
 
 ```kotlin
-// The particular entity to be selected by id.
-object UserEntity : Entity<User>(
-    Table("users"),
-    listOf("id".field, "name".field)
-) {
-    override fun read(resultSet: ResultSetFieldIterator): User = with(resultSet) {
-        User(id = getInt()!!, name = getString()!!)
-    }
-
-    context(cx: Connection)
-    override fun write(record: User): List<Param> = record.run {
-        listOf(id.paramAny, name.paramString)
-    }
-}
-```
-
-Above is an example *Entity* for a user object, which we'll use, below.
-
-```kotlin
-// Mixed into an object dedicated to working with User records.
-class UserDao : Selectable<User> by selectableById(Entity<User>) {
+class UserDao : Selectable<User> by SelectableById(UsenEntity) {
     // ...
 }
 ```
