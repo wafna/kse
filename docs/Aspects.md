@@ -15,6 +15,7 @@ interface Selectable<T> {
 
 Above, we're specifying an action that selects records en masse from a list of ids.
 We'll implement this, directly.
+This interface is required in order to support multiple mix-ins.
 
 ```kotlin
 class SelectableImpl(val entity: Entity<T>) : SelectableByExternalId<E> {
@@ -33,7 +34,7 @@ class SelectableImpl(val entity: Entity<T>) : SelectableByExternalId<E> {
 
 ```
 
-We rely on the *Entity* to supply the projection and read the fields.
+We rely on the *Entity* to supply the projection and read the results.
 Here, we only require the presence of an integer *id* field.
 
 ```kotlin
