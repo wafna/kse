@@ -141,16 +141,16 @@ The *Entity* database methods partially or completely generate some of the requi
 - ***delete***  Generates the just table name and a WHERE.
 
 ```kotlin
-val users = listOf(UserWip("Alice"), UserWip("Bob"))
+userEntity
+    .insert(listOf("Alice", "Bob").map { UserWip(it) })
+    .requireInserts(2)
 
-userEntity.insert(users).requireInserts(2)
-userEntity.update()
-
-val selectedUsers = userEntity.select("U", "WHERE U.ID = ?", 1.paramInt())
+val alice = userEntity.select("u", "WHERE u.id = ?", 1.paramInt()).unique()
 ```
 
 The example, above, demonstrates the convenience of using an Entity.
-Later we'll learn how to apply that select by id logic to any table (entity) using aspects.
+
+Aspects will allow us to apply that select by id logic to any table (entity) using aspects.
 
 ## Listeners
 
@@ -185,7 +185,6 @@ No provision is made for handling exceptions other than in the *withTransaction*
 The reason for this is that all this code is expected to operate in the context of a transaction.
 If an exception happens, it's time to dispose of the transaction.
 Also, we don't want exceptions swallowed in an unchecked *Result*.
-
 
 ## Aspects
 
