@@ -34,8 +34,8 @@ import java.sql.Timestamp
 class TestJDBCTypesPG {
     @Test
     fun testAllNonNull() {
-        withPGDB { db ->
-            db.withTransaction {
+        withPGDB {
+            withTransaction {
                 update(
                     """
                     CREATE TABLE IF NOT EXISTS test_getters_all (
@@ -128,8 +128,8 @@ class TestJDBCTypesPG {
 
     @Test
     fun testAllNull() {
-        withPGDB { db ->
-            db.withTransaction {
+        withPGDB {
+            withTransaction {
                 update(
                     """
                     CREATE TABLE IF NOT EXISTS test_getters_null (

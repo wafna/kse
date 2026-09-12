@@ -11,7 +11,7 @@ import wafna.kse.update
 import wafna.kse.withTransaction
 
 /** Spins up a database container and loans a data source. */
-fun withPGDB(borrow: suspend (DataSource) -> Unit) {
+fun withPGDB(borrow: suspend DataSource.() -> Unit) {
     PostgreSQLContainer(DockerImageName.parse("postgres:15-alpine"))
         .withDatabaseName("test")
         .withUsername("username")
@@ -31,7 +31,7 @@ fun withPGDB(borrow: suspend (DataSource) -> Unit) {
                 db.withTransaction {
                     update("CREATE SCHEMA IF NOT EXISTS kse")
                 }
-                borrow(db)
+                db.borrow()
             }
         } ?: fail("Failed to create container.")
 }

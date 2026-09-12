@@ -21,6 +21,6 @@ class TestDatabasePG {
     }
     @Test
     fun testDatabase() {
-        withPGDB { testDataSource(it) }
+        withPGDB { testDataSource(this) }
     }
 }
