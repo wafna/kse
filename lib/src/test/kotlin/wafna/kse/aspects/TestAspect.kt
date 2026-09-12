@@ -9,7 +9,7 @@ import wafna.kse.setInt
 import wafna.kse.update
 import wafna.kse.withTransaction
 
-// Testing two aspects x two entities.
+// Testing two aspects each with two entities.
 
 object UserDao :
     Selectable<User> by selectable(UserEntity),

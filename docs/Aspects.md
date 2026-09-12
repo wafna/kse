@@ -14,11 +14,11 @@ interface Selectable<T> {
 ```
 
 Above, we're specifying an action that selects records en masse from a list of ids.
-We'll implement this, directly.
 This interface is required to support multiple mix-ins via delegation.
+We'll implement this, directly.
 
 ```kotlin
-class SelectableImpl(val entity: Entity<T>) : SelectableByExternalId<E> {
+class SelectableImpl(val entity: Entity<T>) : Selectable<E> {
     context(_: Connection)
     override suspend fun selectByIds(ids: Collection<Int>): List<T> =
         if (ids.isEmpty()) {
@@ -38,7 +38,7 @@ We rely on the entity to supply the projection and marshal the data.
 Here, we only require the presence of an integer *id* field.
 
 ```kotlin
-class UserDao : Selectable<User> by SelectableById(UsenEntity) {
+class UserDao : Selectable<User> by SelectableImpl(UserEntity) {
     // ...
 }
 ```
