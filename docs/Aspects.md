@@ -24,11 +24,7 @@ class SelectableImpl(val entity: Entity<T>) : Selectable<E> {
         if (ids.isEmpty()) {
             emptyList()
         } else {
-            entity.select(
-                "",
-                "WHERE id = ANY(?::INT[])",
-                ids.paramArray("INT")
-            )
+            entity.select("", "WHERE id = ANY(?::INT[])", ids.setArray("INT"))
         }
 }
 
